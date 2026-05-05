@@ -100,6 +100,9 @@ def _section_shyftr(scan: dict[str, Any]) -> list[str]:
     profiles = summary.get("configured_profiles", [])
     if profiles:
         lines.append(f"- Hermes profiles configured for ShyftR: {', '.join(profiles)}")
+    modes = summary.get("profile_modes") or {}
+    if modes:
+        lines.append("- Authority modes: " + ", ".join(f"{name}={mode}" for name, mode in sorted(modes.items())))
     operations = summary.get("diagnostic_operations", {})
     if operations:
         lines.append("- Diagnostic operations:")

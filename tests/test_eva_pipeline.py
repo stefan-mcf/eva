@@ -122,8 +122,10 @@ def test_shyftr_scanner_reports_cell_diagnostics(tmp_path: Path) -> None:
     assert result["summary"]["cell_id"] == "c"
     assert result["summary"]["approved_charges"] == 1
     assert result["summary"]["diagnostic_operations"] == {"pack": 1, "signal": 1}
+    result["summary"]["profile_modes"] = {"antaeus-terminal-side": "runtime_primary"}
     brief = compile_brief(result)
     assert "ShyftR" in brief
+    assert "antaeus-terminal-side=runtime_primary" in brief
 
 
 def test_config_scanner_detects_group_drift(tmp_path: Path) -> None:

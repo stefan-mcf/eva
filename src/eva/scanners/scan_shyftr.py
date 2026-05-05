@@ -53,6 +53,9 @@ def run_scan(cell: str | Path = DEFAULT_CELL, vault: str | Path | None = None) -
         except json.JSONDecodeError:
             manifest = {"parse_error": str(manifest_path)}
     configured_profiles: list[str] = []
+    profile_modes: dict[str, str] = {}
+    runtime_primary_profiles: list[str] = []
+    bounded_primary_profiles: list[str] = []
     profiles_dir = Path("/Users/stefan/.hermes/profiles")
     if profiles_dir.exists():
         for cfg in profiles_dir.glob("*/shyftr.json"):
@@ -60,6 +63,12 @@ def run_scan(cell: str | Path = DEFAULT_CELL, vault: str | Path | None = None) -
                 data = json.loads(cfg.read_text(encoding="utf-8"))
                 if Path(str(data.get("cell_path", ""))).expanduser() == cell_path:
                     configured_profiles.append(cfg.parent.name)
+                    mode = str(data.get("mode") or "advisory").replace("-", "_")
+                    profile_modes[cfg.parent.name] = mode
+                    if mode == "runtime_primary":
+                        runtime_primary_profiles.append(cfg.parent.name)
+                    elif mode == "bounded_primary":
+                        bounded_primary_profiles.append(cfg.parent.name)
             except Exception:
                 continue
     summary = {
@@ -67,6 +76,9 @@ def run_scan(cell: str | Path = DEFAULT_CELL, vault: str | Path | None = None) -
         "exists": cell_path.exists(),
         "cell_id": manifest.get("cell_id", cell_path.name),
         "configured_profiles": sorted(configured_profiles),
+        "profile_modes": dict(sorted(profile_modes.items())),
+        "bounded_primary_profiles": sorted(bounded_primary_profiles),
+        "runtime_primary_profiles": sorted(runtime_primary_profiles),
         **_ledger_counts(cell_path),
         "diagnostic_operations": dict(sorted(by_operation.items())),
         "diagnostic_statuses": dict(sorted(statuses.items())),
