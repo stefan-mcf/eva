@@ -18,7 +18,7 @@ from eva.common import (
 from eva.compilers.compile_brief import compile_brief
 from eva.compilers.compile_profile import compile_profile
 from eva.proposers.propose_patches import generate_proposals, write_pending
-from eva.scanners import scan_configs, scan_memory, scan_sessions, scan_skills
+from eva.scanners import scan_configs, scan_memory, scan_sessions, scan_shyftr, scan_skills
 
 
 def run_all(
@@ -39,6 +39,7 @@ def run_all(
     sessions = scan_sessions.run_scan(profiles_dir, days=days, vault=vault_path if write else None)
     skills = scan_skills.run_scan(profiles_dir, vault=vault_path)
     configs = scan_configs.run_scan(profiles_dir)
+    shyftr = scan_shyftr.run_scan()
     bundle: dict[str, Any] = {
         "scanner": "combined",
         "timestamp": utc_now(),
@@ -46,6 +47,7 @@ def run_all(
         "sessions": sessions,
         "skills": skills,
         "configs": configs,
+        "shyftr": shyftr,
     }
     profile = compile_profile(bundle, vault_path, write=write)
     proposals = generate_proposals(bundle, profile, vault_path)

@@ -85,6 +85,29 @@ def _section_configs(scan: dict[str, Any]) -> list[str]:
     return lines
 
 
+def _section_shyftr(scan: dict[str, Any]) -> list[str]:
+    lines = ["### ShyftR"]
+    summary = scan.get("summary", {})
+    lines.append(f"Cell: `{summary.get('cell')}` — exists: {summary.get('exists')}")
+    lines.append(
+        f"- Charges: {summary.get('approved_charges', 0)} approved, "
+        f"{summary.get('deprecated_charges', 0)} deprecated, {summary.get('isolated_charges', 0)} isolated"
+    )
+    lines.append(
+        f"- Ledgers: {summary.get('sources', 0)} sources, {summary.get('fragments', 0)} fragments, "
+        f"{summary.get('diagnostics', 0)} diagnostics"
+    )
+    profiles = summary.get("configured_profiles", [])
+    if profiles:
+        lines.append(f"- Hermes profiles configured for ShyftR: {', '.join(profiles)}")
+    operations = summary.get("diagnostic_operations", {})
+    if operations:
+        lines.append("- Diagnostic operations:")
+        for op, count in sorted(operations.items()):
+            lines.append(f"  - `{op}`: {count}")
+    return lines
+
+
 def _section_profile(scan: dict[str, Any]) -> list[str]:
     prefs = scan.get("preferences", {})
     lines = ["### Operator Profile"]
@@ -121,6 +144,7 @@ def compile_brief(scan_results: dict[str, Any]) -> str:
             ("sessions", _section_sessions),
             ("skills", _section_skills),
             ("configs", _section_configs),
+            ("shyftr", _section_shyftr),
             ("operator_profile", _section_profile),
             ("proposal_summary", _section_proposals),
         ]
@@ -136,6 +160,8 @@ def compile_brief(scan_results: dict[str, Any]) -> str:
         lines.extend(_section_skills(scan_results))
     elif scanner == "configs":
         lines.extend(_section_configs(scan_results))
+    elif scanner == "shyftr":
+        lines.extend(_section_shyftr(scan_results))
     else:
         summary = scan_results.get("summary", {})
         lines.append(f"Summary: `{json.dumps(summary)[:800]}`")
