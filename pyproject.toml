@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "EVA — Evidence & Verification Agent for agent-system health scans and optimization proposals."
 readme = "README.md"
 requires-python = ">=3.10"
-license = {text = "MIT"}
+license = "MIT"
 authors = [{name = "Stefan McFeeters"}]
 keywords = ["agents", "observability", "hermes", "verification", "operator-support"]
 classifiers = [
@@ -42,3 +42,11 @@ target-version = "py310"
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM"]
 ignore = ["E501"]
+
+[project.urls]
+Homepage = "https://github.com/stefan-mcf/eva"
+Repository = "https://github.com/stefan-mcf/eva"
+Issues = "https://github.com/stefan-mcf/eva/issues"
+
+[project.optional-dependencies]
+dev = ["pytest", "ruff", "build", "twine"]

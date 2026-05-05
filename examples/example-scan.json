@@ -1,0 +1,50 @@
+{
+  "scanner": "combined",
+  "timestamp": "2026-01-01T00:00:00Z",
+  "memory": {
+    "scanner": "memory",
+    "summary": {
+      "profiles_scanned": 1,
+      "duplicate_candidates": 0,
+      "contradiction_candidates": 1
+    },
+    "findings": [
+      {
+        "type": "contradiction_candidate",
+        "profile": "example-profile",
+        "evidence": "Synthetic example: two preferences appear to conflict."
+      }
+    ]
+  },
+  "sessions": {
+    "scanner": "sessions",
+    "summary": {
+      "databases_scanned": 1,
+      "correction_signals": 2,
+      "repeated_failures": 0
+    }
+  },
+  "skills": {
+    "scanner": "skills",
+    "summary": {
+      "skills_scanned": 3,
+      "oversized_skills": 0,
+      "duplicate_names": 0
+    }
+  },
+  "configs": {
+    "scanner": "configs",
+    "summary": {
+      "profiles_scanned": 1,
+      "drift_candidates": 0
+    }
+  },
+  "operator_profile": {
+    "generated_at": "2026-01-01T00:00:00Z",
+    "top_signals": ["Review conflicting memory guidance before adding new rules."]
+  },
+  "proposal_summary": {
+    "proposals": ["memory-contradiction-review"],
+    "written": []
+  }
+}

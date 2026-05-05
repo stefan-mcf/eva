@@ -1,3 +1,7 @@
+# Historical: 2026-05-05-eva-concept
+
+> Historical note: retained for development history. Current source of truth is README plus docs/architecture.md, docs/safety.md, docs/cli.md, docs/configuration.md, and docs/hermes-adapter.md. Some examples and names were early design sketches.
+
 # EVA — Draft Concept Plan
 
 **Date:** 2026-05-05
@@ -14,7 +18,7 @@
 
 Both the HALO post (recursive agent optimization via trace → diagnose → patch → redeploy) and Graeme's research agent post (vault-based evidence accumulation that makes downstream agents smarter) describe the same pattern: an **evidence operator** that watches what happens, structures it, and feeds insight back into the system.
 
-For Stefan's setup, EVA sits between these two:
+For the operator's setup, EVA sits between these two:
 
 - **Research layer** (inward-facing, not outward): watches *the agent system itself* rather than the outside world
 - **Diagnostic layer**: finds cracks, contradictions, stale artifacts, repeated failures
@@ -37,7 +41,7 @@ Parse the operator's corrections and habits into a structured profile:
 | Session corrections | "Actually, do it this way" patterns |
 | Config changes | Preference drift across profiles |
 
-**Output:** `operator-profile.json` + `operator-profile.md` — a compressed, structured view of "how Stefan likes things done" that any agent can load.
+**Output:** `operator-profile.json` + `operator-profile.md` — a compressed, structured view of "how the operator likes things done" that any agent can load.
 
 ### Layer 2 — Crack Detection
 
@@ -46,7 +50,7 @@ Find what's breaking across the system:
 | Signal | What it means |
 |--------|--------------|
 | Repeated tool failures | Broken tool, missing env var, bad config |
-| Dropped Telegram handoffs | Route bridge bug, topic gating issue |
+| Dropped message handoffs | Route bridge bug, topic gating issue |
 | Delegation timeouts | Model too slow for task, wrong model choice |
 | Stale skills | Loaded often but always patched — needs rewrite |
 | Contradictory memory entries | Two entries saying opposite things |
@@ -69,11 +73,11 @@ Draft structured fixes for operator review:
 ## Architecture
 
 ```text
-~/.hermes/profiles/optimizer/
+~/.hermes/profiles/EVA/
 ├── SOUL.md                          # Identity, boundaries, operating rules
 ├── config.yaml                      # Cheap model (DeepSeek Flash), local terminal, memory + session_search enabled
 ├── skills/
-│   └── optimizer-loop/
+│   └── EVA-loop/
 │       ├── SKILL.md                 # Loop contract: modes, output discipline
 │       └── scripts/
 │           ├── scan_memory.py        # Read Hermes memory DB → contradictions, staleness, orphans
@@ -84,7 +88,7 @@ Draft structured fixes for operator review:
 │           ├── compile_brief.py      # Synthesize findings → operator brief
 │           └── propose.py            # Draft structured proposals for review
 ├── workspace/
-│   └── optimizer-vault/
+│   └── eva-vault/
 │       ├── context/
 │       │   ├── operator-profile.json
 │       │   └── operator-profile.md
@@ -96,7 +100,7 @@ Draft structured fixes for operator review:
 │       │   ├── pending/              # Patches waiting for operator approval
 │       │   └── applied/              # What was applied and when
 │       ├── briefs/
-│       │   └── optimizer-brief.md    # "Here's what I found this cycle"
+│       │   └── EVA-brief.md    # "Here's what I found this cycle"
 │       └── health/
 │           └── latest-health-check.md
 ├── scripts/                          # Profile-level helper scripts
@@ -115,7 +119,7 @@ Every N hours (daily start, configurable):
   3. Scan skills for health (last-modified vs usage frequency)
   4. Scan configs across profiles for drift
   5. Update operator-profile.json with accumulated preferences
-  6. Generate optimizer-brief.md → surface findings to operator
+  6. Generate EVA-brief.md → surface findings to operator
   7. Draft proposals in proposals/pending/ for review
 ```
 
@@ -131,29 +135,29 @@ Every N hours (daily start, configurable):
 
 ## Delivery Model
 
-Findings surface to Stefan via Telegram (home channel):
+Findings surface to the operator via an operator-approved delivery channel:
 
-- **Daily optimizer brief**: concise, structured — "What changed, what's breaking, what to review"
+- **Daily EVA brief**: concise, structured — "What changed, what's breaking, what to review"
 - **Proposals**: one at a time, with evidence, operator accepts/rejects/edits
 - **Health alerts**: only when something is structurally wrong (e.g., memory DB unreachable)
 
-The optimizer doesn't publish or broadcast. It's a private operator-support profile.
+The EVA doesn't publish or broadcast. It's a private operator-support profile.
 
 ---
 
 ## Relationship to Existing System
 
-| Existing component | How optimizer interacts |
+| Existing component | How EVA interacts |
 |--------------------|------------------------|
 | Memory DB | Read-only scan for contradictions/staleness |
 | Skills (all profiles) | Read-only health check |
 | Session transcripts | session_search for correction/failure patterns |
 | Config files | Read-only cross-profile diff |
 | Antaeus plans/docs | Scans for stale plans, orphaned concepts |
-| Cron scheduler | Runs the optimizer loop on schedule |
-| Telegram gateway | Delivers briefs and proposals to Stefan |
+| Cron scheduler | Runs the EVA loop on schedule |
+| Messaging gateway | Delivers briefs and proposals to the operator |
 
-The optimizer is **downstream from everything** — it reads, analyzes, and proposes. It does not own execution of any other agent.
+The EVA is **downstream from everything** — it reads, analyzes, and proposes. It does not own execution of any other agent.
 
 ---
 
@@ -161,7 +165,7 @@ The optimizer is **downstream from everything** — it reads, analyzes, and prop
 
 1. **What's the MVP scope?** Start with memory scan + operator brief only? Include skills scan in v0?
 2. **How does operator-profile.json get consumed?** Loaded as a skill? Injected into system prompt? Both?
-3. **Proposal approval flow.** How does Stefan approve/reject? Telegram inline buttons? Slash commands? Separate chat?
+3. **Proposal approval flow.** How does the operator approve/reject? approved-channel controls? Slash commands? separate review surface?
 4. **Evidence thresholds.** How many repetitions before a pattern is "real"? 3? 5? Per-signal type?
 5. **Model routing.** DeepSeek Flash for routine scans, something stronger for synthesis? Or all-Flash?
 
@@ -172,5 +176,5 @@ The optimizer is **downstream from everything** — it reads, analyzes, and prop
 2. Create the EVA Hermes profile
 3. Build `scan_memory.py` — the first scanner (stub written)
 4. Build `compile_brief.py` — generate first operator brief from existing memory/skills
-5. Manual run, review output with Stefan
+5. Manual run, review output with the operator
 6. Iterate on format before adding more scanners

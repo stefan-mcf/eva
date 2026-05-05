@@ -1,4 +1,4 @@
-"""Compile EVA scan outputs into a Telegram-readable operator brief."""
+"""Compile EVA scan outputs into a operator-readable brief."""
 
 from __future__ import annotations
 

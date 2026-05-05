@@ -1,43 +1,51 @@
-# EVA Hermes Profile
+# EVA Hermes Profile Template
 
-Profile location: `~/.hermes/profiles/eva/`
+This file is an example profile specification for running EVA as a Hermes profile. It is not a live profile record.
 
-## Configuration
+## Location
 
-- **Model:** DeepSeek Flash (`deepseek-v4-flash`) — cheap, fast, good enough for scanning
-- **Provider:** DeepSeek
-- **Tools:** terminal, file, skills, memory, session_search, cronjob, messaging (Telegram)
-- **Max turns:** 50
-- **Delegation:** disabled
-- **Browser/Web:** disabled (EVA doesn't browse)
+Create a local Hermes profile using the normal Hermes profile mechanism. Keep live profile files, credentials, scheduler IDs, and generated vault data outside this repository.
 
-## Cron Job
+## Model guidance
 
-`eva-daily-scan` — runs daily at 9am AEST.
+EVA's loop is mostly scanning, summarization, and proposal drafting. A low-cost model is usually sufficient for scheduled scan briefs. Use a stronger review model if the profile is expected to adjudicate complex architecture recommendations.
 
-Pinned to DeepSeek Flash. Terminal + file tools only (no web, no delegation). Full prompt is self-contained — no skill dependency needed.
+## Required capabilities
+
+- Terminal or process execution to run `eva-loop`.
+- File read access to the profile stores being scanned.
+- File write access to the configured EVA vault.
+- Optional scheduling support for periodic scans.
+- Optional messaging support for delivering briefs through an operator-approved channel.
+
+## Usually unnecessary capabilities
+
+- Browser access.
+- External web search.
+- Delegation.
+- Direct access to unrelated production services.
+
+## Example schedule
+
+Run once per day or on demand:
+
+```bash
+EVA_HERMES_PROFILES_DIR=/path/to/hermes/profiles \
+EVA_VAULT_DIR=/path/to/eva-vault \
+eva-loop --profiles-dir /path/to/hermes/profiles --vault /path/to/eva-vault
+```
 
 ## Vault
 
+```text
+eva-vault/
+  context/
+  evidence/
+  proposals/
+  briefs/
+  health/
 ```
-workspace/eva-vault/
-  context/          # Operator profile (future)
-  evidence/         # corrections.jsonl, failures.jsonl, successes.jsonl
-  proposals/        # pending/ + applied/
-  briefs/           # One brief per scan
-  health/           # Scanner health reports
-```
 
-## Skill
+## Adding scanners
 
-`eva-loop` — local profile skill at `skills/eva-loop/SKILL.md`.
-
-Modes: SCAN (run scanners), BRIEF (compile output), FULL (scan + brief).
-
-## Adding Scanners
-
-Each scanner is a standalone Python module in the EVA repo (`src/eva/scanners/`). To add a new scanner:
-
-1. Write the scanner — it takes no args, outputs JSON to stdout
-2. Add it to the cron job prompt in the RUN step
-3. Add a section in `compile_brief.py` for the new scanner's output shape
+Each scanner should be a standalone Python module under `src/eva/scanners/`, produce JSON-compatible output, and preserve degraded-mode reporting when evidence is missing or unreadable.

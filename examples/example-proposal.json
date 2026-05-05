@@ -1,0 +1,14 @@
+{
+  "id": "memory-contradiction-review",
+  "title": "Review contradictory memory guidance",
+  "status": "pending_review",
+  "rationale": "Synthetic scan evidence found two operator preferences that may conflict.",
+  "evidence": [
+    {
+      "source": "example-profile/memory.md",
+      "summary": "Two generic preferences use conflicting always/never language."
+    }
+  ],
+  "proposed_action": "Ask the operator which preference is current, then update memory manually.",
+  "safety": "Proposal only; EVA does not edit memory files."
+}

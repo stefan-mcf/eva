@@ -1,3 +1,7 @@
+# Historical: 2026-05-05-eva-implementation-plan
+
+> Historical note: retained for development history. Current source of truth is README plus docs/architecture.md, docs/safety.md, docs/cli.md, docs/configuration.md, and docs/hermes-adapter.md. Some examples and names were early design sketches.
+
 # EVA Implementation Plan
 
 **Date:** 2026-05-05
@@ -11,7 +15,7 @@
 
 EVA is the Evidence & Verification Agent — an operator-support layer that watches how an agent system operates and surfaces structured optimization proposals. Framework-agnostic design; first adapter targets Hermes.
 
-This plan covers building EVA to a minimally useful state (daily briefs reaching the operator via Telegram) plus a clear path for deeper capabilities.
+This plan covers building EVA to a minimally useful state (daily briefs reaching the operator through an approved channel) plus a clear path for deeper capabilities.
 
 ---
 
@@ -43,18 +47,18 @@ This plan covers building EVA to a minimally useful state (daily briefs reaching
 - [x] `src/eva/compilers/compile_brief.py`
 - [x] Sections: findings (contradictions, orphans, duplicates), topic distribution, scanner health
 - [x] Deduplication of findings
-- [x] Telegram-compatible markdown output
+- [x] messaging-compatible markdown output
 
 **Debt:**
 - No operator-profile.json generation yet
 - No proposal drafting (`src/eva/proposers/` directory exists but empty)
-- Brief format not yet tuned for Stefan's eye — needs feedback loop
+- Brief format not yet tuned for the operator's eye — needs feedback loop
 
 ---
 
 ## Tranche 3: Hermes Profile Creation
 
-**What:** A real `eva` Hermes profile that runs the pipeline on schedule and delivers briefs via Telegram.
+**What:** A real `eva` Hermes profile that runs the pipeline on schedule and delivers briefs through an approved channel.
 **Dependencies:** Tranche 1, Tranche 2.
 
 ### 3.1 Profile skeleton
@@ -97,7 +101,7 @@ This plan covers building EVA to a minimally useful state (daily briefs reaching
 - [x] 3.2.6 Create vault directory structure
 - [x] 3.2.7 Create cron job: `eva-daily-scan` — daily, runs the loop, delivers brief
 - [x] 3.2.8 Smoke test: `hermes -p eva chat -q "Run a memory scan and deliver the brief"`
-- [x] 3.2.9 Verify brief lands in Telegram home channel
+- [x] 3.2.9 Verify brief lands in operator-approved delivery channel
 
 ---
 
@@ -119,7 +123,7 @@ Detect:
 ### 4.2 Tasks
 
 - [x] 4.2.1 `src/eva/scanners/scan_sessions.py` — reads session SQLite, applies correction detection
-- [x] 4.2.2 Correction extraction with session linking ("session ABC-123: Stefan corrected X")
+- [x] 4.2.2 Correction extraction with session linking ("session ABC-123: the operator corrected X")
 - [x] 4.2.3 Tool failure aggregation ("terminal tool failed 12 times this week: pattern is SSH timeout")
 - [x] 4.2.4 Integrate into `compile_brief.py` with separate section
 - [x] 4.2.5 Add to eva-loop skill — run after memory scan
@@ -184,7 +188,7 @@ Detect:
 - [x] 8.1.3 Memory merge proposals: "These 3 entries contradict. Proposed merge: ..."
 - [x] 8.1.4 Config alignment proposals: "Profiles A and B diverge on delegation. Both should use DeepSeek Flash"
 - [x] 8.1.5 Write proposals to `eva-vault/proposals/pending/`
-- [x] 8.1.6 Approval flow integration — operator accepts/rejects via Telegram or CLI
+- [x] 8.1.6 Approval flow integration — operator accepts/rejects via an approved channel or CLI
 
 ---
 
@@ -222,8 +226,8 @@ Detect:
 | Component | Status |
 |-----------|--------|
 | Repo | `stefan-mcf/eva` (private), pushed |
-| Memory scanner | Working against live data |
-| Brief compiler | Working, produces Telegram-ready output |
+| Memory scanner | Working against example data |
+| Brief compiler | Working, produces operator-ready output |
 | Hermes profile | Created and smoke-tested |
 | Vault directory | Created with context/evidence/proposals/briefs/health structure |
 | Cron job | `eva-daily-scan` scheduled daily at 09:00 |
@@ -241,8 +245,8 @@ Detect:
 - Local verification: `python3 -m ruff check .` and `python3 -m pytest -q` pass.
 - Full-loop verification: `python3 -m eva.loop` writes latest scan/brief, operator profile, and deduplicated pending proposals.
 - Hermes profile smoke: `hermes --profile eva ... deliver_brief.sh` returned the expected EVA brief.
-- Cron verification: `eva-daily-scan` is enabled and scheduled for daily Telegram delivery.
+- Cron verification: `eva-daily-scan` is enabled and scheduled for daily operator-approved delivery.
 
 ## Next Action
 
-Public-release gate: keep the repo private until Stefan explicitly chooses to publish. Before flipping visibility, run one more secret scan, attribution check, and remote CI/status verification.
+Public-release gate: keep the repo private until the operator explicitly chooses to publish. Before flipping visibility, run one more secret scan, attribution check, and remote CI/status verification.

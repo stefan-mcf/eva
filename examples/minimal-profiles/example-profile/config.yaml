@@ -1,0 +1,7 @@
+model:
+  provider: example-provider
+  default: example-model
+tools:
+  enabled:
+    - terminal
+    - file
