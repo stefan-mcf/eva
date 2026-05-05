@@ -1,114 +1,247 @@
 """
-EVA memory scanner — reads the Hermes memory DB and flags contradictions, staleness, and orphaned entries.
+EVA memory scanner — reads Hermes markdown-format memory files and flags
+contradictions, staleness, orphan references, and structural issues.
 
-Hermes memory is stored as SQLite at ~/.hermes/memory.db (or profile-local equivalent).
-Schema (as of May 2026): entries table with id, content, target, created_at, updated_at.
+Hermes memory (as of May 2026) is stored as:
+  ~/.hermes/profiles/<profile>/memories/MEMORY.md   (agent notes)
+  ~/.hermes/profiles/<profile>/memories/USER.md     (user profile)
 
-This scanner is read-only. It never writes to memory.
+Format: Section header with percentage + capacity, entries separated by '§'.
+Each entry is a free-text paragraph/sentence. No SQLite.
 """
 
 from __future__ import annotations
 
-import sqlite3
-import json
+import re
 import os
+import json
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+from collections import Counter
 
 # ─── Configuration ──────────────────────────────────────────────────────────
 
-STALENESS_DAYS = 90  # entries older than this without updates are flagged
-CONTRADICTION_SIMILARITY = 0.7  # placeholder threshold (unused in v0)
+STALENESS_DAYS = 90  # Entries that haven't changed in this many days are flagged
+CONTRADICTION_KEYWORDS = {
+    # Pairs of keywords that suggest contradictory entries
+    ("always", "never"): "Direct contradiction",
+    ("public", "private"): "Visibility contradiction",
+    ("ssh", "do not ssh"): "SSH access contradiction",
+    ("antaeus", "dead"): "Project lifecycle contradiction",
+    ("lab", "no lab"): "Naming convention contradiction",
+}
+ORPHAN_KEYWORDS = [
+    # Known dead/stale project names
+    "antaeus",
+    "antaeus-terminal",
+    "antaeus-terminal-side",
+    "courier",
+    "shyftr",
+]
+
+PROFILES_GLOB = "/Users/stefan/.hermes/profiles"
 
 
-def resolve_memory_db(hermes_home: str | None = None) -> Path:
-    """Find the Hermes memory DB, checking profile-local then global."""
-    candidate = Path(hermes_home or os.path.expanduser("~/.hermes")) / "memory.db"
-    if candidate.exists():
-        return candidate
-    global_candidate = Path(os.path.expanduser("~/.hermes")) / "memory.db"
-    if global_candidate.exists():
-        return global_candidate
-    raise FileNotFoundError("Could not locate Hermes memory.db")
+# ─── Memory file parsing ────────────────────────────────────────────────────
+
+def parse_memory_file(path: Path) -> dict[str, Any]:
+    """
+    Parse a Hermes MEMORY.md or USER.md file.
+    Returns: {file, target, total_entries, entries: [{index, text, keywords}]}
+    """
+    with open(path) as f:
+        content = f.read()
+
+    target = "memory" if "MEMORY" in path.name else "user"
+    entries = []
+    # Header format: "═══════════════\nMEMORY (your personal notes) [76% — 1,691/2,200 chars]\n..."
+    # Strip header lines until first § or paragraph content
+    lines = content.split("\n")
+    in_header = True
+    buffer = []
+
+    for line in lines:
+        # Skip decorative lines and header info
+        if in_header:
+            if line.strip().startswith("═══"):
+                continue
+            if line.strip().startswith("MEMORY") or line.strip().startswith("USER"):
+                continue
+            if "chars]" in line or "chars)" in line:
+                continue
+            if not line.strip():
+                continue
+            in_header = False
+
+        if line.strip() == "§":
+            if buffer:
+                entries.append(" ".join(buffer).strip())
+                buffer = []
+        else:
+            buffer.append(line.strip())
+
+    if buffer:
+        entries.append(" ".join(buffer).strip())
+
+    return {
+        "file": str(path),
+        "profile": path.parent.parent.name,
+        "target": target,
+        "total_entries": len(entries),
+        "entries": [
+            {"index": i, "text": e} for i, e in enumerate(entries) if e
+        ],
+    }
 
 
-def load_entries(db_path: Path) -> list[dict[str, Any]]:
-    """Load all memory entries as dicts."""
-    conn = sqlite3.connect(str(db_path))
-    conn.row_factory = sqlite3.Row
-    cursor = conn.execute(
-        "SELECT id, content, target, created_at, updated_at FROM entries ORDER BY updated_at DESC"
-    )
-    rows = [dict(r) for r in cursor.fetchall()]
-    conn.close()
-    return rows
+def discover_memory_files(base: str = PROFILES_GLOB) -> list[Path]:
+    """Find all MEMORY.md and USER.md files across profiles (directory iteration, not glob)."""
+    files = []
+    base_path = Path(base)
+    if not base_path.exists():
+        return files
+    for profile_dir in base_path.iterdir():
+        if not profile_dir.is_dir():
+            continue
+        for fname in ("MEMORY.md", "USER.md"):
+            fpath = profile_dir / "memories" / fname
+            if fpath.exists():
+                files.append(fpath)
+    return files
 
 
 # ─── Scanners ────────────────────────────────────────────────────────────────
 
-def find_contradictions(entries: list[dict]) -> list[dict]:
+def find_contradictions(memory_data: list[dict]) -> list[dict]:
     """
-    Find entries that semantically contradict each other.
-    v0: simple keyword overlap heuristic. Future: embedding-based.
-    Returns list of {entry_a_id, entry_b_id, overlap, reason}.
+    Find entries that semantically contradict each other using keyword
+    pair heuristics. v0: keyword-based. Future: embedding similarity.
     """
     findings = []
-    # Placeholder — semantic contradiction detection needs embeddings
-    # For v0 we return empty and note the limitation in the brief.
+    all_entries = []
+    for md in memory_data:
+        for entry in md["entries"]:
+            all_entries.append({**entry, "profile": md["profile"], "target": md["target"]})
+
+    for (kw_a, kw_b), reason in CONTRADICTION_KEYWORDS.items():
+        group_a = [e for e in all_entries if kw_a.lower() in e["text"].lower()]
+        group_b = [e for e in all_entries if kw_b.lower() in e["text"].lower()]
+        for e_a in group_a:
+            for e_b in group_b:
+                # Skip same-entry matches (single entries containing both keywords)
+                if e_a["profile"] == e_b["profile"] and e_a["target"] == e_b["target"] and e_a["index"] == e_b["index"]:
+                    continue
+                if e_a["profile"] == e_b["profile"] and e_a["target"] == e_b["target"]:
+                    findings.append({
+                        "reason": reason,
+                        "keywords": (kw_a, kw_b),
+                        "entry_a": {"profile": e_a["profile"], "target": e_a["target"], "index": e_a["index"], "text": e_a["text"][:120]},
+                        "entry_b": {"profile": e_b["profile"], "target": e_b["target"], "index": e_b["index"], "text": e_b["text"][:120]},
+                    })
     return findings
 
 
-def find_stale_entries(entries: list[dict]) -> list[dict]:
-    """Find entries that haven't been updated in STALENESS_DAYS."""
-    now = datetime.now(timezone.utc)
-    stale = []
-    for entry in entries:
-        updated = entry.get("updated_at")
-        if not updated:
-            continue
-        dt = datetime.fromisoformat(updated.replace("Z", "+00:00"))
-        if (now - dt).days > STALENESS_DAYS:
-            stale.append({"id": entry["id"], "days_old": (now - dt).days, "target": entry["target"]})
-    return stale
+def find_orphan_references(memory_data: list[dict]) -> list[dict]:
+    """Find entries referencing known dead/stale projects or profiles."""
+    findings = []
+    for md in memory_data:
+        for entry in md["entries"]:
+            text_lower = entry["text"].lower()
+            for keyword in ORPHAN_KEYWORDS:
+                if keyword.lower() in text_lower:
+                    # Only flag if the entry ALSO doesn't acknowledge it's dead
+                    if "dead" in text_lower or "shelved" in text_lower or "phased out" in text_lower:
+                        continue
+                    findings.append({
+                        "profile": md["profile"],
+                        "target": md["target"],
+                        "index": entry["index"],
+                        "keyword": keyword,
+                        "text": entry["text"][:120],
+                    })
+    return findings
 
 
-def find_orphan_entries(entries: list[dict]) -> list[dict]:
-    """Find entries that reference tools/skills/profiles that no longer exist."""
-    # Placeholder for v0 — needs filesystem scan for skill/profile existence.
-    return []
+def find_duplicate_content(memory_data: list[dict]) -> list[dict]:
+    """Find entries with near-identical content across profiles."""
+    from difflib import SequenceMatcher
+    findings = []
+    all_entries = []
+    for md in memory_data:
+        for entry in md["entries"]:
+            all_entries.append({**entry, "profile": md["profile"], "target": md["target"]})
+
+    for i in range(len(all_entries)):
+        for j in range(i + 1, len(all_entries)):
+            if all_entries[i]["profile"] == all_entries[j]["profile"] and all_entries[i]["target"] == all_entries[j]["target"]:
+                sim = SequenceMatcher(None, all_entries[i]["text"], all_entries[j]["text"]).ratio()
+                if sim > 0.85:
+                    findings.append({
+                        "similarity": round(sim, 2),
+                        "entry_a": {"profile": all_entries[i]["profile"], "index": all_entries[i]["index"], "text": all_entries[i]["text"][:100]},
+                        "entry_b": {"profile": all_entries[i]["profile"], "index": all_entries[j]["index"], "text": all_entries[j]["text"][:100]},
+                    })
+    return findings
+
+
+def get_topic_distribution(memory_data: list[dict]) -> dict[str, int]:
+    """Get topic distribution across all memory entries (keyword-based)."""
+    topics = Counter()
+    topic_keywords = {
+        "hermes": ["hermes", "profile", "swarm", "delegation", "gateway"],
+        "github": ["github", "git", "repo", "commit", "pr", "push"],
+        "antaeus": ["antaeus"],
+        "eva": ["eva", "evidence", "verification"],
+        "models": ["deepseek", "openai", "gemini", "model", "gpt"],
+        "skills": ["skill", "skill_manage", "SKILL.md"],
+        "memory": ["memory", "memories"],
+        "ssh/macbook": ["ssh", "macbook", "mac"],
+        "telegram": ["telegram", "dm", "channel"],
+        "worker-patterns": ["worker-pattern", "worker pattern"],
+        "naming": ["repo name", "public", "private", "lab"],
+    }
+    for md in memory_data:
+        for entry in md["entries"]:
+            text_lower = entry["text"].lower()
+            for topic, kws in topic_keywords.items():
+                if any(kw in text_lower for kw in kws):
+                    topics[topic] += 1
+    return dict(topics.most_common(20))
 
 
 # ─── Main scan ───────────────────────────────────────────────────────────────
 
-def run_scan(hermes_home: str | None = None) -> dict:
+def run_scan(base: str = PROFILES_GLOB) -> dict:
     """Run all memory scanners and return structured findings."""
-    db_path = resolve_memory_db(hermes_home)
-    entries = load_entries(db_path)
+    files = discover_memory_files(base)
+    memory_data = [parse_memory_file(f) for f in files]
 
-    contradictions = find_contradictions(entries)
-    stale = find_stale_entries(entries)
-    orphans = find_orphan_entries(entries)
+    total_entries = sum(md["total_entries"] for md in memory_data)
+    profiles = {md["profile"] for md in memory_data}
 
     return {
         "scanner": "memory",
         "timestamp": datetime.now(timezone.utc).isoformat(),
-        "total_entries": len(entries),
-        "findings": {
-            "contradictions": contradictions,
-            "stale": stale,
-            "orphans": orphans,
+        "summary": {
+            "files_scanned": len(files),
+            "profiles": sorted(profiles),
+            "total_entries": total_entries,
         },
+        "contradictions": find_contradictions(memory_data),
+        "orphan_references": find_orphan_references(memory_data),
+        "duplicates": find_duplicate_content(memory_data),
+        "topics": get_topic_distribution(memory_data),
         "health": {
-            "contradiction_scanner": "STUB — keyword-only, no semantic detection",
-            "orphan_scanner": "STUB — needs skills/profile filesystem scan",
+            "contradiction_scanner": "keyword-based heuristics only",
+            "orphan_detection": f"static keyword list ({len(ORPHAN_KEYWORDS)} terms)",
+            "staleness_scanner": f"disabled — filesystem mtime only, markdown has no per-entry timestamps",
         },
     }
 
 
 if __name__ == "__main__":
     import sys
-
-    hermes_home = sys.argv[1] if len(sys.argv) > 1 else None
-    result = run_scan(hermes_home)
+    base = sys.argv[1] if len(sys.argv) > 1 else PROFILES_GLOB
+    result = run_scan(base)
     print(json.dumps(result, indent=2))
