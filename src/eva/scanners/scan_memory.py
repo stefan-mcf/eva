@@ -12,13 +12,14 @@ Each entry is a free-text paragraph/sentence. No SQLite.
 
 from __future__ import annotations
 
-import re
-import os
 import json
+from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
-from collections import Counter
+
+from eva.common import HERMES_PROFILES_DIR
+from eva.settings import load_settings
 
 # ─── Configuration ──────────────────────────────────────────────────────────
 
@@ -40,7 +41,7 @@ ORPHAN_KEYWORDS = [
     "shyftr",
 ]
 
-PROFILES_GLOB = "/Users/stefan/.hermes/profiles"
+PROFILES_GLOB = str(HERMES_PROFILES_DIR)
 
 
 # ─── Memory file parsing ────────────────────────────────────────────────────
@@ -113,18 +114,19 @@ def discover_memory_files(base: str = PROFILES_GLOB) -> list[Path]:
 
 # ─── Scanners ────────────────────────────────────────────────────────────────
 
-def find_contradictions(memory_data: list[dict]) -> list[dict]:
+def find_contradictions(memory_data: list[dict], contradiction_keywords: dict[tuple[str, str], str] | None = None) -> list[dict]:
     """
     Find entries that semantically contradict each other using keyword
     pair heuristics. v0: keyword-based. Future: embedding similarity.
     """
+    contradiction_keywords = contradiction_keywords or CONTRADICTION_KEYWORDS
     findings = []
     all_entries = []
     for md in memory_data:
         for entry in md["entries"]:
             all_entries.append({**entry, "profile": md["profile"], "target": md["target"]})
 
-    for (kw_a, kw_b), reason in CONTRADICTION_KEYWORDS.items():
+    for (kw_a, kw_b), reason in contradiction_keywords.items():
         group_a = [e for e in all_entries if kw_a.lower() in e["text"].lower()]
         group_b = [e for e in all_entries if kw_b.lower() in e["text"].lower()]
         for e_a in group_a:
@@ -142,13 +144,14 @@ def find_contradictions(memory_data: list[dict]) -> list[dict]:
     return findings
 
 
-def find_orphan_references(memory_data: list[dict]) -> list[dict]:
+def find_orphan_references(memory_data: list[dict], orphan_keywords: list[str] | None = None) -> list[dict]:
     """Find entries referencing known dead/stale projects or profiles."""
+    orphan_keywords = orphan_keywords or ORPHAN_KEYWORDS
     findings = []
     for md in memory_data:
         for entry in md["entries"]:
             text_lower = entry["text"].lower()
-            for keyword in ORPHAN_KEYWORDS:
+            for keyword in orphan_keywords:
                 if keyword.lower() in text_lower:
                     # Only flag if the entry ALSO doesn't acknowledge it's dead
                     if "dead" in text_lower or "shelved" in text_lower or "phased out" in text_lower:
@@ -163,7 +166,7 @@ def find_orphan_references(memory_data: list[dict]) -> list[dict]:
     return findings
 
 
-def find_duplicate_content(memory_data: list[dict]) -> list[dict]:
+def find_duplicate_content(memory_data: list[dict], threshold: float = 0.85) -> list[dict]:
     """Find entries with near-identical content across profiles."""
     from difflib import SequenceMatcher
     findings = []
@@ -176,7 +179,7 @@ def find_duplicate_content(memory_data: list[dict]) -> list[dict]:
         for j in range(i + 1, len(all_entries)):
             if all_entries[i]["profile"] == all_entries[j]["profile"] and all_entries[i]["target"] == all_entries[j]["target"]:
                 sim = SequenceMatcher(None, all_entries[i]["text"], all_entries[j]["text"]).ratio()
-                if sim > 0.85:
+                if sim > threshold:
                     findings.append({
                         "similarity": round(sim, 2),
                         "entry_a": {"profile": all_entries[i]["profile"], "index": all_entries[i]["index"], "text": all_entries[i]["text"][:100]},
@@ -212,8 +215,20 @@ def get_topic_distribution(memory_data: list[dict]) -> dict[str, int]:
 
 # ─── Main scan ───────────────────────────────────────────────────────────────
 
-def run_scan(base: str = PROFILES_GLOB) -> dict:
+def run_scan(base: str = PROFILES_GLOB, vault: str | Path | None = None) -> dict:
     """Run all memory scanners and return structured findings."""
+    settings = (
+        load_settings(vault).get("memory", {})
+        if vault is not None
+        else load_settings().get("memory", {})
+    )
+    orphan_keywords = list(settings.get("orphan_keywords", ORPHAN_KEYWORDS))
+    contradiction_keywords = {
+        (item[0], item[1]): item[2]
+        for item in settings.get("contradiction_keywords", [])
+        if isinstance(item, list) and len(item) >= 3
+    } or CONTRADICTION_KEYWORDS
+    duplicate_threshold = float(settings.get("duplicate_similarity_threshold", 0.85))
     files = discover_memory_files(base)
     memory_data = [parse_memory_file(f) for f in files]
 
@@ -228,20 +243,26 @@ def run_scan(base: str = PROFILES_GLOB) -> dict:
             "profiles": sorted(profiles),
             "total_entries": total_entries,
         },
-        "contradictions": find_contradictions(memory_data),
-        "orphan_references": find_orphan_references(memory_data),
-        "duplicates": find_duplicate_content(memory_data),
+        "memory_data": memory_data,
+        "contradictions": find_contradictions(memory_data, contradiction_keywords),
+        "orphan_references": find_orphan_references(memory_data, orphan_keywords),
+        "duplicates": find_duplicate_content(memory_data, duplicate_threshold),
         "topics": get_topic_distribution(memory_data),
         "health": {
             "contradiction_scanner": "keyword-based heuristics only",
-            "orphan_detection": f"static keyword list ({len(ORPHAN_KEYWORDS)} terms)",
-            "staleness_scanner": f"disabled — filesystem mtime only, markdown has no per-entry timestamps",
+            "orphan_detection": f"settings keyword list ({len(orphan_keywords)} terms)",
+            "duplicate_similarity_threshold": duplicate_threshold,
+            "staleness_scanner": "disabled — filesystem mtime only, markdown has no per-entry timestamps",
         },
     }
 
 
-if __name__ == "__main__":
+def main() -> None:
     import sys
     base = sys.argv[1] if len(sys.argv) > 1 else PROFILES_GLOB
     result = run_scan(base)
-    print(json.dumps(result, indent=2))
+    print(json.dumps(result, indent=2, sort_keys=True))
+
+
+if __name__ == "__main__":
+    main()

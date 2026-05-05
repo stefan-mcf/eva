@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "eva-agent"
+version = "0.1.0"
+description = "EVA — Evidence & Verification Agent for agent-system health scans and optimization proposals."
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [{name = "Stefan McFeeters"}]
+keywords = ["agents", "observability", "hermes", "verification", "operator-support"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+]
+dependencies = []
+
+[project.scripts]
+eva-scan-memory = "eva.scanners.scan_memory:main"
+eva-scan-sessions = "eva.scanners.scan_sessions:main"
+eva-scan-skills = "eva.scanners.scan_skills:main"
+eva-scan-configs = "eva.scanners.scan_configs:main"
+eva-compile-brief = "eva.compilers.compile_brief:main"
+eva-compile-profile = "eva.compilers.compile_profile:main"
+eva-propose-patches = "eva.proposers.propose_patches:main"
+eva-loop = "eva.loop:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+ignore = ["E501"]

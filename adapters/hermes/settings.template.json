@@ -1,0 +1,23 @@
+{
+  "memory": {
+    "duplicate_similarity_threshold": 0.85,
+    "orphan_keywords": ["antaeus", "antaeus-terminal", "antaeus-terminal-side", "courier", "shyftr"]
+  },
+  "sessions": {
+    "window_days": 30,
+    "repeated_failure_threshold": 3
+  },
+  "skills": {
+    "oversized_bytes": 80000,
+    "stale_days": 30,
+    "high_patch_threshold": 3
+  },
+  "brief": {
+    "max_examples": 10,
+    "style": "telegram-concise"
+  },
+  "proposals": {
+    "acceptance_bonus": 0.2,
+    "rejection_penalty": 0.3
+  }
+}

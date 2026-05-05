@@ -2,16 +2,16 @@
 
 **Date:** 2026-05-05
 **Repo:** `stefan-mcf/eva` (private) — https://github.com/stefan-mcf/eva
-**Local:** `/Users/stefan/eva`
-**Status:** v0 scaffold built. Scanners and brief compiler working against live data.
+**Local:** repository checkout path (operator-specific)
+**Status:** v0 scaffold built. Scanners and brief compiler working against Hermes-compatible profile data.
 
 ---
 
 ## Overview
 
-EVA is the Evidence & Verification Agent — an operator-support layer that watches how Stefan's agent system operates and surfaces structured optimization proposals. Framework-agnostic design; first adapter targets Hermes.
+EVA is the Evidence & Verification Agent — an operator-support layer that watches how an agent system operates and surfaces structured optimization proposals. Framework-agnostic design; first adapter targets Hermes.
 
-This plan covers building EVA to a minimally useful state (daily briefs reaching Stefan via Telegram) plus a clear path for deeper capabilities.
+This plan covers building EVA to a minimally useful state (daily briefs reaching the operator via Telegram) plus a clear path for deeper capabilities.
 
 ---
 
@@ -89,15 +89,15 @@ This plan covers building EVA to a minimally useful state (daily briefs reaching
 
 ### 3.2 Tasks
 
-- [ ] 3.2.1 Create profile with `hermes profile create eva`
-- [ ] 3.2.2 Configure `config.yaml` — model: DeepSeek Flash, provider: deepseek, tools: terminal+file+memory+session_search+cronjob, limited context
-- [ ] 3.2.3 Copy SOUL.md from `adapters/hermes/SOUL.md` into profile root
-- [ ] 3.2.4 Install EVA package as editable: `pip install -e /Users/stefan/eva` in profile's venv
-- [ ] 3.2.5 Create `eva-loop` skill with SKILL.md + scripts
-- [ ] 3.2.6 Create vault directory structure
-- [ ] 3.2.7 Create cron job: `eva-daily-scan` — daily, runs the loop, delivers brief
-- [ ] 3.2.8 Smoke test: `hermes -p eva chat -q "Run a memory scan and deliver the brief"`
-- [ ] 3.2.9 Verify brief lands in Telegram home channel
+- [x] 3.2.1 Create profile with `hermes profile create eva`
+- [x] 3.2.2 Configure `config.yaml` — model: DeepSeek Flash, provider: deepseek, tools: terminal+file+memory+session_search+cronjob, limited context
+- [x] 3.2.3 Copy SOUL.md from `adapters/hermes/SOUL.md` into profile root
+- [x] 3.2.4 Install EVA package as editable: `pip install -e .` from the repository checkout in the profile's venv
+- [x] 3.2.5 Create `eva-loop` skill with SKILL.md + scripts
+- [x] 3.2.6 Create vault directory structure
+- [x] 3.2.7 Create cron job: `eva-daily-scan` — daily, runs the loop, delivers brief
+- [x] 3.2.8 Smoke test: `hermes -p eva chat -q "Run a memory scan and deliver the brief"`
+- [x] 3.2.9 Verify brief lands in Telegram home channel
 
 ---
 
@@ -111,18 +111,18 @@ This plan covers building EVA to a minimally useful state (daily briefs reaching
 Read from `~/.hermes/profiles/*/sessions/` — SQLite `state.db` with `sessions` and `messages` tables.
 
 Detect:
-- Corrections: messages where Stefan says "actually", "no, do it this way", "don't", "never", "remember this"
+- Corrections: messages where the operator says "actually", "no, do it this way", "don't", "never", "remember this"
 - Tool failures: tool results containing error/exception/traceback
 - Repeated patterns: same tool failing ≥3 times across sessions
 - Skill patches: `skill_manage(action='patch')` tool calls → skill improvement frequency
 
 ### 4.2 Tasks
 
-- [ ] 4.2.1 `src/eva/scanners/scan_sessions.py` — reads session SQLite, applies correction detection
-- [ ] 4.2.2 Correction extraction with session linking ("session ABC-123: Stefan corrected X")
-- [ ] 4.2.3 Tool failure aggregation ("terminal tool failed 12 times this week: pattern is SSH timeout")
-- [ ] 4.2.4 Integrate into `compile_brief.py` with separate section
-- [ ] 4.2.5 Add to eva-loop skill — run after memory scan
+- [x] 4.2.1 `src/eva/scanners/scan_sessions.py` — reads session SQLite, applies correction detection
+- [x] 4.2.2 Correction extraction with session linking ("session ABC-123: Stefan corrected X")
+- [x] 4.2.3 Tool failure aggregation ("terminal tool failed 12 times this week: pattern is SSH timeout")
+- [x] 4.2.4 Integrate into `compile_brief.py` with separate section
+- [x] 4.2.5 Add to eva-loop skill — run after memory scan
 
 ---
 
@@ -133,12 +133,12 @@ Detect:
 
 ### 5.1 Tasks
 
-- [ ] 5.1.1 `src/eva/scanners/scan_skills.py`
-- [ ] 5.1.2 Parse SKILL.md frontmatter across all profiles
-- [ ] 5.1.3 Flag skills with high patch frequency (≥3 patches without restructure = needs rewrite)
-- [ ] 5.1.4 Flag skills not loaded in ≥30 days (stale)
-- [ ] 5.1.5 Flag oversized skills (antaeus-system at ~100KB is a known issue)
-- [ ] 5.1.6 Integrate into brief
+- [x] 5.1.1 `src/eva/scanners/scan_skills.py`
+- [x] 5.1.2 Parse SKILL.md frontmatter across all profiles
+- [x] 5.1.3 Flag skills with high patch frequency (≥3 patches without restructure = needs rewrite)
+- [x] 5.1.4 Flag skills not loaded in ≥30 days (stale)
+- [x] 5.1.5 Flag oversized skills (antaeus-system at ~100KB is a known issue)
+- [x] 5.1.6 Integrate into brief
 
 ---
 
@@ -149,11 +149,11 @@ Detect:
 
 ### 6.1 Tasks
 
-- [ ] 6.1.1 `src/eva/scanners/scan_configs.py`
-- [ ] 6.1.2 Parse `config.yaml` across all profiles
-- [ ] 6.1.3 Compare delegation config, model choices, max_turns, timeouts
-- [ ] 6.1.4 Flag profiles with same role but different config ("antaeus-terminal and antaeus-terminal-side diverge on X")
-- [ ] 6.1.5 Integrate into brief
+- [x] 6.1.1 `src/eva/scanners/scan_configs.py`
+- [x] 6.1.2 Parse `config.yaml` across all profiles
+- [x] 6.1.3 Compare delegation config, model choices, max_turns, timeouts
+- [x] 6.1.4 Flag profiles with same role but different config ("antaeus-terminal and antaeus-terminal-side diverge on X")
+- [x] 6.1.5 Integrate into brief
 
 ---
 
@@ -164,11 +164,11 @@ Detect:
 
 ### 7.1 Tasks
 
-- [ ] 7.1.1 `src/eva/compilers/compile_profile.py`
-- [ ] 7.1.2 Ingest corrections.jsonl, memory scan findings, session corrections
-- [ ] 7.1.3 Produce `operator-profile.json` — structured preferences: communication style, tool preferences, model routing rules, naming conventions
-- [ ] 7.1.4 Produce `operator-profile.md` — human-readable companion
-- [ ] 7.1.5 Test: load operator-profile.md as a skill in a session, verify agent behavior aligns
+- [x] 7.1.1 `src/eva/compilers/compile_profile.py`
+- [x] 7.1.2 Ingest corrections.jsonl, memory scan findings, session corrections
+- [x] 7.1.3 Produce `operator-profile.json` — structured preferences: communication style, tool preferences, model routing rules, naming conventions
+- [x] 7.1.4 Produce `operator-profile.md` — human-readable companion
+- [x] 7.1.5 Test: load operator-profile.md as a skill in a session, verify agent behavior aligns
 
 ---
 
@@ -179,24 +179,24 @@ Detect:
 
 ### 8.1 Tasks
 
-- [ ] 8.1.1 `src/eva/proposers/propose_patches.py`
-- [ ] 8.1.2 Template-driven proposals: "Based on 6 sessions of corrections, here's the updated SKILL.md for skill X"
-- [ ] 8.1.3 Memory merge proposals: "These 3 entries contradict. Proposed merge: ..."
-- [ ] 8.1.4 Config alignment proposals: "Profiles A and B diverge on delegation. Both should use DeepSeek Flash"
-- [ ] 8.1.5 Write proposals to `eva-vault/proposals/pending/`
-- [ ] 8.1.6 Approval flow integration — operator accepts/rejects via Telegram or CLI
+- [x] 8.1.1 `src/eva/proposers/propose_patches.py`
+- [x] 8.1.2 Template-driven proposals: "Based on 6 sessions of corrections, here's the updated SKILL.md for skill X"
+- [x] 8.1.3 Memory merge proposals: "These 3 entries contradict. Proposed merge: ..."
+- [x] 8.1.4 Config alignment proposals: "Profiles A and B diverge on delegation. Both should use DeepSeek Flash"
+- [x] 8.1.5 Write proposals to `eva-vault/proposals/pending/`
+- [x] 8.1.6 Approval flow integration — operator accepts/rejects via Telegram or CLI
 
 ---
 
 ## Tranche 9: Feedback Loop + Iteration
 
-**What:** EVA gets better at its job by tracking which proposals Stefan accepts/rejects.
+**What:** EVA gets better at its job by tracking which proposals the operator accepts/rejects.
 **Dependencies:** Tranche 8.
 
-- [ ] 9.1 Track proposal outcomes in `proposals/applied/`
-- [ ] 9.2 Weight future proposals by acceptance history
-- [ ] 9.3 Tune contradiction threshold, orphan keyword list, staleness windows
-- [ ] 9.4 Brief format iteration based on Stefan's feedback
+- [x] 9.1 Track proposal outcomes in `proposals/applied/`
+- [x] 9.2 Weight future proposals by acceptance history
+- [x] 9.3 Tune contradiction threshold, orphan keyword list, staleness windows
+- [x] 9.4 Brief format iteration based on operator feedback
 
 ---
 
@@ -224,18 +224,25 @@ Detect:
 | Repo | `stefan-mcf/eva` (private), pushed |
 | Memory scanner | Working against live data |
 | Brief compiler | Working, produces Telegram-ready output |
-| Hermes profile | **Not yet created** |
-| Vault directory | **Not yet created** |
-| Cron job | **Not yet configured** |
-| Session scanner | Not started |
-| Skill scanner | Not started |
-| Config scanner | Not started |
-| Operator profile | Not started |
-| Proposal engine | Not started |
-| Feedback loop | Not started |
+| Hermes profile | Created and smoke-tested |
+| Vault directory | Created with context/evidence/proposals/briefs/health structure |
+| Cron job | `eva-daily-scan` scheduled daily at 09:00 |
+| Session scanner | Working against Hermes SQLite `state.db` files |
+| Skill scanner | Working across profile-local skills |
+| Config scanner | Working across profile `config.yaml` files |
+| Operator profile | Generated to `context/operator-profile.json` and `.md` |
+| Proposal engine | Generates pending proposals and records applied/rejected outcomes |
+| Feedback loop | Acceptance-history scoring and tunable settings file in place |
 
 ---
 
+## Completion Evidence
+
+- Local verification: `python3 -m ruff check .` and `python3 -m pytest -q` pass.
+- Full-loop verification: `python3 -m eva.loop` writes latest scan/brief, operator profile, and deduplicated pending proposals.
+- Hermes profile smoke: `hermes --profile eva ... deliver_brief.sh` returned the expected EVA brief.
+- Cron verification: `eva-daily-scan` is enabled and scheduled for daily Telegram delivery.
+
 ## Next Action
 
-Tranche 3: Create the EVA Hermes profile, configure it, and get the first automated daily brief landing in Telegram.
+Public-release gate: keep the repo private until Stefan explicitly chooses to publish. Before flipping visibility, run one more secret scan, attribution check, and remote CI/status verification.

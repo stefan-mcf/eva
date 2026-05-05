@@ -1,7 +1,13 @@
 __pycache__/
-*.pyc
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
 .venv/
-.DS_Store
-*.egg-info/
 dist/
-.env
+build/
+*.egg-info/
+.DS_Store
+
+# EVA runtime/vault artifacts are generated under ~/.hermes/profiles/eva, not committed.
+.hermes-swarm-reports/
