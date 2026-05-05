@@ -1,13 +1,55 @@
+# Python bytecode and tool caches
 __pycache__/
 *.py[cod]
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
+.pyre/
+.tox/
+.nox/
+.hypothesis/
+.coverage
+coverage.xml
+htmlcov/
+
+# Local environments
 .venv/
+venv/
+env/
+.env
+.env.*
+
+# Build/package artifacts
 dist/
 build/
+.eggs/
 *.egg-info/
-.DS_Store
 
-# EVA runtime/vault artifacts are generated under ~/.hermes/profiles/eva, not committed.
+# OS/editor artifacts
+.DS_Store
+*.swp
+*.swo
+
+# Logs and local scratch
+*.log
 .hermes-swarm-reports/
+
+# EVA runtime/vault artifacts are generated outside the source repo.
+eva-vault/
+workspace/eva-vault/
+**/eva-vault/
+latest-scan.json
+latest-brief.md
+*.jsonl
+
+# Live runtime/profile artifacts must never be committed.
+state.db
+*.sqlite
+*.sqlite3
+**/memories/MEMORY.md
+**/memories/USER.md
+auth.json
+*.pem
+*.key
+id_rsa
+id_ed25519
