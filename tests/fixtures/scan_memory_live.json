@@ -1,0 +1,578 @@
+{
+  "scanner": "memory",
+  "timestamp": "2026-05-05T11:42:15.245587+00:00",
+  "summary": {
+    "files_scanned": 12,
+    "profiles": [
+      "antaeus-terminal",
+      "antaeus-terminal-extra",
+      "antaeus-terminal-side",
+      "courier",
+      "eva",
+      "reviewer"
+    ],
+    "total_entries": 80
+  },
+  "contradictions": [
+    {
+      "reason": "Visibility contradiction",
+      "keywords": [
+        "public",
+        "private"
+      ],
+      "entry_a": {
+        "profile": "reviewer",
+        "target": "user",
+        "index": 5,
+        "text": "User's GitHub identity is `stefan-mcf`; the separate GitHub account `Stefan` is not theirs. Public releases and visible "
+      },
+      "entry_b": {
+        "profile": "reviewer",
+        "target": "user",
+        "index": 4,
+        "text": "For public GitHub repositories, user prefers not to include \"public\" in the repo name; use a private/internal repo name "
+      }
+    },
+    {
+      "reason": "Visibility contradiction",
+      "keywords": [
+        "public",
+        "private"
+      ],
+      "entry_a": {
+        "profile": "eva",
+        "target": "memory",
+        "index": 4,
+        "text": "GitHub naming: two valid patterns. (A) History-scrub path: `name-lab` private + clean `name` public (e.g. worker-pattern"
+      },
+      "entry_b": {
+        "profile": "eva",
+        "target": "memory",
+        "index": 5,
+        "text": "EVA (Evidence & Verification Agent) is Stefan's new agent observability project \u2014 watches memory, skills, sessions, conf"
+      }
+    },
+    {
+      "reason": "Visibility contradiction",
+      "keywords": [
+        "public",
+        "private"
+      ],
+      "entry_a": {
+        "profile": "eva",
+        "target": "memory",
+        "index": 5,
+        "text": "EVA (Evidence & Verification Agent) is Stefan's new agent observability project \u2014 watches memory, skills, sessions, conf"
+      },
+      "entry_b": {
+        "profile": "eva",
+        "target": "memory",
+        "index": 4,
+        "text": "GitHub naming: two valid patterns. (A) History-scrub path: `name-lab` private + clean `name` public (e.g. worker-pattern"
+      }
+    },
+    {
+      "reason": "Visibility contradiction",
+      "keywords": [
+        "public",
+        "private"
+      ],
+      "entry_a": {
+        "profile": "eva",
+        "target": "user",
+        "index": 5,
+        "text": "User's GitHub identity is `stefan-mcf`; the separate GitHub account `Stefan` is not theirs. Public releases and visible "
+      },
+      "entry_b": {
+        "profile": "eva",
+        "target": "user",
+        "index": 4,
+        "text": "For public GitHub repositories, user prefers not to include \"public\" in the repo name; use a private/internal repo name "
+      }
+    },
+    {
+      "reason": "Visibility contradiction",
+      "keywords": [
+        "public",
+        "private"
+      ],
+      "entry_a": {
+        "profile": "antaeus-terminal-side",
+        "target": "user",
+        "index": 5,
+        "text": "User's GitHub identity is `stefan-mcf`; the separate GitHub account `Stefan` is not theirs. Public releases and visible "
+      },
+      "entry_b": {
+        "profile": "antaeus-terminal-side",
+        "target": "user",
+        "index": 4,
+        "text": "For public GitHub repositories, user prefers not to include \"public\" in the repo name; use a private/internal repo name "
+      }
+    },
+    {
+      "reason": "Visibility contradiction",
+      "keywords": [
+        "public",
+        "private"
+      ],
+      "entry_a": {
+        "profile": "antaeus-terminal-extra",
+        "target": "memory",
+        "index": 4,
+        "text": "GitHub naming: two valid patterns. (A) History-scrub path: `name-lab` private + clean `name` public (e.g. worker-pattern"
+      },
+      "entry_b": {
+        "profile": "antaeus-terminal-extra",
+        "target": "memory",
+        "index": 5,
+        "text": "EVA (Evidence & Verification Agent) is Stefan's new agent observability project \u2014 watches memory, skills, sessions, conf"
+      }
+    },
+    {
+      "reason": "Visibility contradiction",
+      "keywords": [
+        "public",
+        "private"
+      ],
+      "entry_a": {
+        "profile": "antaeus-terminal-extra",
+        "target": "memory",
+        "index": 5,
+        "text": "EVA (Evidence & Verification Agent) is Stefan's new agent observability project \u2014 watches memory, skills, sessions, conf"
+      },
+      "entry_b": {
+        "profile": "antaeus-terminal-extra",
+        "target": "memory",
+        "index": 4,
+        "text": "GitHub naming: two valid patterns. (A) History-scrub path: `name-lab` private + clean `name` public (e.g. worker-pattern"
+      }
+    },
+    {
+      "reason": "Visibility contradiction",
+      "keywords": [
+        "public",
+        "private"
+      ],
+      "entry_a": {
+        "profile": "antaeus-terminal-extra",
+        "target": "user",
+        "index": 5,
+        "text": "User's GitHub identity is `stefan-mcf`; the separate GitHub account `Stefan` is not theirs. Public releases and visible "
+      },
+      "entry_b": {
+        "profile": "antaeus-terminal-extra",
+        "target": "user",
+        "index": 4,
+        "text": "For public GitHub repositories, user prefers not to include \"public\" in the repo name; use a private/internal repo name "
+      }
+    },
+    {
+      "reason": "Project lifecycle contradiction",
+      "keywords": [
+        "antaeus",
+        "dead"
+      ],
+      "entry_a": {
+        "profile": "eva",
+        "target": "memory",
+        "index": 0,
+        "text": "Skill `antaeus-system` SKILL.md is oversized (~100.3 KB) and skill_manage patch/edit can fail; add or update supporting "
+      },
+      "entry_b": {
+        "profile": "eva",
+        "target": "memory",
+        "index": 6,
+        "text": "Antaeus is shelved/dead \u2014 Stefan phased it out. Do not treat it as an active project or place new work under its governa"
+      }
+    },
+    {
+      "reason": "Project lifecycle contradiction",
+      "keywords": [
+        "antaeus",
+        "dead"
+      ],
+      "entry_a": {
+        "profile": "eva",
+        "target": "memory",
+        "index": 2,
+        "text": "Hermes ephemeral delegation is configured for default, antaeus-terminal, and antaeus-terminal-side profiles to use DeepS"
+      },
+      "entry_b": {
+        "profile": "eva",
+        "target": "memory",
+        "index": 6,
+        "text": "Antaeus is shelved/dead \u2014 Stefan phased it out. Do not treat it as an active project or place new work under its governa"
+      }
+    },
+    {
+      "reason": "Project lifecycle contradiction",
+      "keywords": [
+        "antaeus",
+        "dead"
+      ],
+      "entry_a": {
+        "profile": "antaeus-terminal-extra",
+        "target": "memory",
+        "index": 0,
+        "text": "Skill `antaeus-system` SKILL.md is oversized (~100.3 KB) and skill_manage patch/edit can fail; add or update supporting "
+      },
+      "entry_b": {
+        "profile": "antaeus-terminal-extra",
+        "target": "memory",
+        "index": 6,
+        "text": "Antaeus is shelved/dead \u2014 Stefan phased it out. Do not treat it as an active project or place new work under its governa"
+      }
+    },
+    {
+      "reason": "Project lifecycle contradiction",
+      "keywords": [
+        "antaeus",
+        "dead"
+      ],
+      "entry_a": {
+        "profile": "antaeus-terminal-extra",
+        "target": "memory",
+        "index": 2,
+        "text": "Hermes ephemeral delegation is configured for default, antaeus-terminal, and antaeus-terminal-side profiles to use DeepS"
+      },
+      "entry_b": {
+        "profile": "antaeus-terminal-extra",
+        "target": "memory",
+        "index": 6,
+        "text": "Antaeus is shelved/dead \u2014 Stefan phased it out. Do not treat it as an active project or place new work under its governa"
+      }
+    },
+    {
+      "reason": "Naming convention contradiction",
+      "keywords": [
+        "lab",
+        "no lab"
+      ],
+      "entry_a": {
+        "profile": "eva",
+        "target": "memory",
+        "index": 5,
+        "text": "EVA (Evidence & Verification Agent) is Stefan's new agent observability project \u2014 watches memory, skills, sessions, conf"
+      },
+      "entry_b": {
+        "profile": "eva",
+        "target": "memory",
+        "index": 4,
+        "text": "GitHub naming: two valid patterns. (A) History-scrub path: `name-lab` private + clean `name` public (e.g. worker-pattern"
+      }
+    },
+    {
+      "reason": "Naming convention contradiction",
+      "keywords": [
+        "lab",
+        "no lab"
+      ],
+      "entry_a": {
+        "profile": "antaeus-terminal-extra",
+        "target": "memory",
+        "index": 5,
+        "text": "EVA (Evidence & Verification Agent) is Stefan's new agent observability project \u2014 watches memory, skills, sessions, conf"
+      },
+      "entry_b": {
+        "profile": "antaeus-terminal-extra",
+        "target": "memory",
+        "index": 4,
+        "text": "GitHub naming: two valid patterns. (A) History-scrub path: `name-lab` private + clean `name` public (e.g. worker-pattern"
+      }
+    }
+  ],
+  "orphan_references": [
+    {
+      "profile": "reviewer",
+      "target": "memory",
+      "index": 0,
+      "keyword": "antaeus",
+      "text": "Skill `antaeus-system` SKILL.md is oversized (~100.3 KB) and skill_manage patch/edit can fail; add or update supporting "
+    },
+    {
+      "profile": "reviewer",
+      "target": "memory",
+      "index": 1,
+      "keyword": "antaeus",
+      "text": "For Hermes Workspace Swarm questions, distinguish upstream Swarm roles/workers (`swarm1`\u2013`swarm12`, docs/swarm/ROLES.md "
+    },
+    {
+      "profile": "reviewer",
+      "target": "memory",
+      "index": 3,
+      "keyword": "antaeus",
+      "text": "Hermes ephemeral delegation is configured for default, antaeus-terminal, and antaeus-terminal-side profiles to use DeepS"
+    },
+    {
+      "profile": "reviewer",
+      "target": "memory",
+      "index": 3,
+      "keyword": "antaeus-terminal",
+      "text": "Hermes ephemeral delegation is configured for default, antaeus-terminal, and antaeus-terminal-side profiles to use DeepS"
+    },
+    {
+      "profile": "reviewer",
+      "target": "memory",
+      "index": 3,
+      "keyword": "antaeus-terminal-side",
+      "text": "Hermes ephemeral delegation is configured for default, antaeus-terminal, and antaeus-terminal-side profiles to use DeepS"
+    },
+    {
+      "profile": "reviewer",
+      "target": "user",
+      "index": 1,
+      "keyword": "antaeus",
+      "text": "User values preserving architectural context before closing sessions and expects explicit verification that crucial deci"
+    },
+    {
+      "profile": "eva",
+      "target": "memory",
+      "index": 0,
+      "keyword": "antaeus",
+      "text": "Skill `antaeus-system` SKILL.md is oversized (~100.3 KB) and skill_manage patch/edit can fail; add or update supporting "
+    },
+    {
+      "profile": "eva",
+      "target": "memory",
+      "index": 2,
+      "keyword": "antaeus",
+      "text": "Hermes ephemeral delegation is configured for default, antaeus-terminal, and antaeus-terminal-side profiles to use DeepS"
+    },
+    {
+      "profile": "eva",
+      "target": "memory",
+      "index": 2,
+      "keyword": "antaeus-terminal",
+      "text": "Hermes ephemeral delegation is configured for default, antaeus-terminal, and antaeus-terminal-side profiles to use DeepS"
+    },
+    {
+      "profile": "eva",
+      "target": "memory",
+      "index": 2,
+      "keyword": "antaeus-terminal-side",
+      "text": "Hermes ephemeral delegation is configured for default, antaeus-terminal, and antaeus-terminal-side profiles to use DeepS"
+    },
+    {
+      "profile": "eva",
+      "target": "user",
+      "index": 1,
+      "keyword": "antaeus",
+      "text": "User values preserving architectural context before closing sessions and expects explicit verification that crucial deci"
+    },
+    {
+      "profile": "courier",
+      "target": "memory",
+      "index": 1,
+      "keyword": "shyftr",
+      "text": "ShyftR: /Users/stefan/shyftr-lab (stefan-mcf/shyftr-lab). Vocab: Cell Pulse Spark Charge Coil Rail Grid Pack Signal Regu"
+    },
+    {
+      "profile": "courier",
+      "target": "memory",
+      "index": 6,
+      "keyword": "antaeus",
+      "text": "Upwork proposal reviewer bot (antaeus-terminal-extra Telegram bot) is NOT configured on this system. ~/.hermes/scripts/s"
+    },
+    {
+      "profile": "courier",
+      "target": "memory",
+      "index": 6,
+      "keyword": "antaeus-terminal",
+      "text": "Upwork proposal reviewer bot (antaeus-terminal-extra Telegram bot) is NOT configured on this system. ~/.hermes/scripts/s"
+    },
+    {
+      "profile": "courier",
+      "target": "user",
+      "index": 0,
+      "keyword": "antaeus",
+      "text": "Antaeus policy: review catches worker errors; prefer GPT-5.2 if verified. Planner GPT-5.4; docs/test/rest DeepSeek Flash"
+    },
+    {
+      "profile": "courier",
+      "target": "user",
+      "index": 1,
+      "keyword": "antaeus",
+      "text": "User wants local Qwen fully removed from Antaeus: policies/registries, queued/live tasks, server, models/profile storage"
+    },
+    {
+      "profile": "courier",
+      "target": "user",
+      "index": 3,
+      "keyword": "antaeus",
+      "text": "Telegram: Antaeus bots use Antaeus handles; non-Antaeus bots use hermes_ prefix (hermes_courier_bot). Proposals delivere"
+    },
+    {
+      "profile": "courier",
+      "target": "user",
+      "index": 3,
+      "keyword": "courier",
+      "text": "Telegram: Antaeus bots use Antaeus handles; non-Antaeus bots use hermes_ prefix (hermes_courier_bot). Proposals delivere"
+    },
+    {
+      "profile": "courier",
+      "target": "user",
+      "index": 4,
+      "keyword": "antaeus",
+      "text": "Antaeus naming: factory/Hostile Waters/Factorio flavor; likes Site/Depot/District/Zone; dislikes 'soul', *0, 'mem', leet"
+    },
+    {
+      "profile": "courier",
+      "target": "user",
+      "index": 7,
+      "keyword": "antaeus",
+      "text": "Antaeus/Hermes: no fake swarms; real lanes use persistent swarm profiles, not delegate_task; module-swarm=DeepSeek Flash"
+    },
+    {
+      "profile": "antaeus-terminal",
+      "target": "memory",
+      "index": 0,
+      "keyword": "antaeus",
+      "text": "Antaeus learned workflows are documented in `antaeus-system` references: CDPC roadmap ingestion, CDPC continuation robus"
+    },
+    {
+      "profile": "antaeus-terminal",
+      "target": "memory",
+      "index": 1,
+      "keyword": "antaeus",
+      "text": "Before GitHub create/push/commit operations, verify `gh api user --jq .login` is `stefan-mcf`; never post, commit, or pu"
+    },
+    {
+      "profile": "antaeus-terminal",
+      "target": "memory",
+      "index": 2,
+      "keyword": "antaeus",
+      "text": "Hermes profiles `antaeus-terminal` and `antaeus-terminal-side` both have `agent.max_turns: 200`. On 2026-05-02 Telegram "
+    },
+    {
+      "profile": "antaeus-terminal",
+      "target": "memory",
+      "index": 2,
+      "keyword": "antaeus-terminal",
+      "text": "Hermes profiles `antaeus-terminal` and `antaeus-terminal-side` both have `agent.max_turns: 200`. On 2026-05-02 Telegram "
+    },
+    {
+      "profile": "antaeus-terminal",
+      "target": "memory",
+      "index": 2,
+      "keyword": "antaeus-terminal-side",
+      "text": "Hermes profiles `antaeus-terminal` and `antaeus-terminal-side` both have `agent.max_turns: 200`. On 2026-05-02 Telegram "
+    },
+    {
+      "profile": "antaeus-terminal",
+      "target": "memory",
+      "index": 3,
+      "keyword": "antaeus",
+      "text": "Antaeus Zone doctrine: `Zone` is the canonical repo/project boundary, `Sector` is the capability/function boundary, and "
+    },
+    {
+      "profile": "antaeus-terminal",
+      "target": "memory",
+      "index": 5,
+      "keyword": "shyftr",
+      "text": "Portfolio repos (2026-05-04): 4 public repos on stefan-mcf \u2014 csv-workflow-engine (renamed from ai-workflow-automation-mi"
+    },
+    {
+      "profile": "antaeus-terminal",
+      "target": "user",
+      "index": 2,
+      "keyword": "antaeus",
+      "text": "User wants future Antaeus/Hermes worker-pattern doctrine to expose an MCP/tool adapter surface, prefer persistent Hermes"
+    },
+    {
+      "profile": "antaeus-terminal-side",
+      "target": "memory",
+      "index": 0,
+      "keyword": "antaeus",
+      "text": "Skill `antaeus-system` SKILL.md is oversized (~100.3 KB) and skill_manage patch/edit can fail; add or update supporting "
+    },
+    {
+      "profile": "antaeus-terminal-side",
+      "target": "memory",
+      "index": 1,
+      "keyword": "antaeus",
+      "text": "For Hermes Workspace Swarm questions, distinguish upstream Swarm roles/workers (`swarm1`\u2013`swarm12`, docs/swarm/ROLES.md "
+    },
+    {
+      "profile": "antaeus-terminal-side",
+      "target": "memory",
+      "index": 3,
+      "keyword": "antaeus",
+      "text": "Hermes ephemeral delegation is configured for default, antaeus-terminal, and antaeus-terminal-side profiles to use DeepS"
+    },
+    {
+      "profile": "antaeus-terminal-side",
+      "target": "memory",
+      "index": 3,
+      "keyword": "antaeus-terminal",
+      "text": "Hermes ephemeral delegation is configured for default, antaeus-terminal, and antaeus-terminal-side profiles to use DeepS"
+    },
+    {
+      "profile": "antaeus-terminal-side",
+      "target": "memory",
+      "index": 3,
+      "keyword": "antaeus-terminal-side",
+      "text": "Hermes ephemeral delegation is configured for default, antaeus-terminal, and antaeus-terminal-side profiles to use DeepS"
+    },
+    {
+      "profile": "antaeus-terminal-side",
+      "target": "user",
+      "index": 1,
+      "keyword": "antaeus",
+      "text": "User values preserving architectural context before closing sessions and expects explicit verification that crucial deci"
+    },
+    {
+      "profile": "antaeus-terminal-extra",
+      "target": "memory",
+      "index": 0,
+      "keyword": "antaeus",
+      "text": "Skill `antaeus-system` SKILL.md is oversized (~100.3 KB) and skill_manage patch/edit can fail; add or update supporting "
+    },
+    {
+      "profile": "antaeus-terminal-extra",
+      "target": "memory",
+      "index": 2,
+      "keyword": "antaeus",
+      "text": "Hermes ephemeral delegation is configured for default, antaeus-terminal, and antaeus-terminal-side profiles to use DeepS"
+    },
+    {
+      "profile": "antaeus-terminal-extra",
+      "target": "memory",
+      "index": 2,
+      "keyword": "antaeus-terminal",
+      "text": "Hermes ephemeral delegation is configured for default, antaeus-terminal, and antaeus-terminal-side profiles to use DeepS"
+    },
+    {
+      "profile": "antaeus-terminal-extra",
+      "target": "memory",
+      "index": 2,
+      "keyword": "antaeus-terminal-side",
+      "text": "Hermes ephemeral delegation is configured for default, antaeus-terminal, and antaeus-terminal-side profiles to use DeepS"
+    },
+    {
+      "profile": "antaeus-terminal-extra",
+      "target": "user",
+      "index": 1,
+      "keyword": "antaeus",
+      "text": "User values preserving architectural context before closing sessions and expects explicit verification that crucial deci"
+    }
+  ],
+  "duplicates": [],
+  "topics": {
+    "github": 73,
+    "hermes": 37,
+    "antaeus": 27,
+    "naming": 20,
+    "models": 17,
+    "eva": 15,
+    "skills": 9,
+    "worker-patterns": 7,
+    "telegram": 6,
+    "ssh/macbook": 5,
+    "memory": 4
+  },
+  "health": {
+    "contradiction_scanner": "keyword-based heuristics only",
+    "orphan_detection": "static keyword list (5 terms)",
+    "staleness_scanner": "disabled \u2014 filesystem mtime only, markdown has no per-entry timestamps"
+  }
+}
