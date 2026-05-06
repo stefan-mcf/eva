@@ -4,11 +4,11 @@ EVA is intentionally conservative. It helps an operator understand an agent runt
 
 ## Proposal-only invariant
 
-EVA may produce evidence, summaries, briefs, and proposal files. A proposal is a recommendation for manual review. EVA does not apply proposals automatically, modify runtime configuration, edit memories, patch skills, or rewrite source repositories.
+EVA may produce evidence, summaries, briefs, remediation plans, notification summaries, and proposal files. A proposal or remediation plan is a recommendation for manual review. EVA does not apply proposals automatically, modify runtime configuration, edit memories, patch skills, or rewrite source repositories.
 
 ## `--no-write` invariant
 
-`eva-loop --no-write` is a strict dry-run. It must not create a vault, write evidence files, write proposals, update operator profiles, or create briefs. This behavior is covered by tests and by `scripts/public_readiness_check.py`.
+`eva-loop --no-write` is a strict dry-run. It must not create a vault, write evidence files, write proposals, update operator profiles, create briefs, write remediation plans, or write notification summaries. This behavior is covered by tests and by `scripts/public_readiness_check.py`.
 
 ## What EVA reads
 
@@ -29,7 +29,9 @@ In write mode, EVA writes only under the configured EVA vault:
 - evidence summaries;
 - compiled operator profile JSON/Markdown;
 - pending proposal JSON files;
-- brief Markdown/JSON artifacts; and
+- brief Markdown/JSON artifacts;
+- remediation plan JSON/Markdown artifacts;
+- scheduler-friendly notification summaries; and
 - health/degraded-mode notes when implemented.
 
 ## What EVA never writes
@@ -48,9 +50,10 @@ EVA scanners should look for signs that secrets may be present without printing 
 
 1. EVA scans durable evidence.
 2. EVA drafts a proposal with rationale and supporting evidence.
-3. The operator reviews the proposal.
-4. A separate approved workflow applies, edits, rejects, or defers the proposal.
-5. EVA can later observe the result as evidence.
+3. EVA compiles a checklisted remediation plan that groups findings into ordered tranches.
+4. The operator reviews the proposal and plan.
+5. A separate approved workflow applies, edits, rejects, or defers the proposal.
+6. EVA can later observe the result as evidence.
 
 ## Pre-publication scans
 

@@ -72,12 +72,16 @@ eva-vault/
   briefs/
     latest-scan.json
     latest-brief.md
+  plans/
+    latest-plan.json
+    latest-plan.md
   health/
+    latest-notification.txt
 ```
 
 ## Retention guidance
 
-The vault may contain sensitive derived evidence. Store it outside the public repository, back it up according to local policy, and prune old generated briefs or scan JSON files when they are no longer useful. Keep pending proposal records until they are accepted, rejected, or superseded.
+The vault may contain sensitive derived evidence. Store it outside the public repository, back it up according to local policy, and prune old generated briefs, scan JSON files, or timestamped plan copies when they are no longer useful. Keep pending proposal records until they are accepted, rejected, or superseded.
 
 ## Template settings
 

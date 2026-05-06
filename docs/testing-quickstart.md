@@ -101,7 +101,15 @@ eva-loop \
   --json
 ```
 
-Review generated artifacts before sharing them. A write-mode run can create evidence, profile, proposal, brief, and health files inside the vault you selected.
+Review generated artifacts before sharing them. A write-mode run can create evidence, profile, proposal, brief, remediation-plan, notification-summary, and health files inside the vault you selected.
+
+Expected plan artifacts after write mode include:
+
+```text
+/tmp/eva-vault/plans/latest-plan.json
+/tmp/eva-vault/plans/latest-plan.md
+/tmp/eva-vault/health/latest-notification.txt
+```
 
 ## 6. Safety boundaries for testers
 

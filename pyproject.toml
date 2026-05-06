@@ -9,7 +9,7 @@ description = "EVA — Evidence & Verification Agent for agent-system health sca
 readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
-authors = [{name = "Stefan McFeeters"}]
+authors = [{name = "Stefan"}]
 keywords = ["agents", "observability", "hermes", "verification", "operator-support"]
 classifiers = [
   "Development Status :: 3 - Alpha",
@@ -25,6 +25,7 @@ eva-scan-skills = "eva.scanners.scan_skills:main"
 eva-scan-configs = "eva.scanners.scan_configs:main"
 eva-compile-brief = "eva.compilers.compile_brief:main"
 eva-compile-profile = "eva.compilers.compile_profile:main"
+eva-compile-plan = "eva.compilers.compile_remediation_plan:main"
 eva-propose-patches = "eva.proposers.propose_patches:main"
 eva-loop = "eva.loop:main"
 

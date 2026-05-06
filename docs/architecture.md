@@ -1,6 +1,6 @@
 # EVA Architecture
 
-EVA is an evidence and verification layer for agent runtimes. It converts durable runtime records into evidence bundles, compiles an operator-facing view of system health, and drafts proposals that can be reviewed before any change is made.
+EVA is an evidence and verification layer for agent runtimes. It converts durable runtime records into evidence bundles, compiles an operator-facing view of system health, drafts proposals, and generates checklisted remediation plans that can be reviewed before any change is made.
 
 ## Architecture goals
 
@@ -36,6 +36,7 @@ Evidence Sources
   → Operator Profile Compiler
   → Proposal Engine
   → Brief Compiler
+  → Remediation Plan Compiler
   → Operator Review
 ```
 
@@ -48,10 +49,11 @@ graph LR
   C --> D[Operator Profile Compiler]
   D --> E[Proposal Engine]
   E --> F[Brief Compiler]
-  F --> G[Operator Review]
+  F --> H[Remediation Plan Compiler]
+  H --> G[Operator Review]
 ```
 
-Evidence sources are durable files or databases from an agent runtime. Scanners normalize those sources into JSON-like summaries. The compiler turns the combined evidence into an operator profile. The proposal engine creates pending recommendations. The brief compiler creates a human-readable summary.
+Evidence sources are durable files or databases from an agent runtime. Scanners normalize those sources into JSON-like summaries. The compiler turns the combined evidence into an operator profile. The proposal engine creates pending recommendations. The brief compiler creates a human-readable summary. The remediation-plan compiler turns findings and proposals into ordered, checklisted operator tranches.
 
 ## Runtime/data-flow architecture
 
@@ -71,7 +73,9 @@ flowchart TD
   L --> C[eva-vault/context]
   L --> R[eva-vault/proposals/pending]
   L --> B[eva-vault/briefs]
+  L --> N[eva-vault/plans + health/latest-notification.txt]
   B --> O[Operator Review]
+  N --> O
   R --> O
 ```
 
@@ -87,6 +91,7 @@ In write mode, `eva-loop` creates or updates vault artifacts. In strict dry-run 
 - `eva.scanners.scan_configs` — profile config drift checks.
 - `eva.compilers.compile_profile` — operator profile compilation from combined evidence.
 - `eva.compilers.compile_brief` — concise human brief compilation.
+- `eva.compilers.compile_remediation_plan` — checklisted remediation plan and notification-summary compilation.
 - `eva.proposers.propose_patches` — pending proposal generation.
 - `eva.loop` — end-to-end orchestration and CLI entrypoint.
 
@@ -102,6 +107,7 @@ A combined scan bundle contains:
 - `operator_profile`: compiled summary.
 - `proposal_summary`: generated proposals and written proposal paths.
 - `brief`: markdown brief in non-JSON contexts.
+- `remediation_plan`: checklisted remediation plan dictionary.
 
 Scanner internals are intentionally plain dictionaries so adapters can evolve without a schema migration framework. Public docs describe stable top-level fields, not every internal diagnostic key.
 
@@ -112,6 +118,10 @@ The operator profile is a JSON-compatible dictionary containing generated timest
 ### Proposal schema overview
 
 Pending proposals are JSON-compatible records that include an identifier, title, rationale, confidence or priority where available, evidence references where available, and a manual review disposition. A proposal is not an action.
+
+### Remediation plan schema overview
+
+Remediation plans use schema `eva-remediation-plan/v1`. They include finding counts, artifact pointers, ordered tranches, approval gates, an operator inbox, and safety flags. A remediation plan is a checklist, not an action. See `docs/remediation-plans.md`.
 
 ### Vault layout
 
@@ -132,7 +142,11 @@ eva-vault/
   briefs/
     latest-scan.json
     latest-brief.md
+  plans/
+    latest-plan.json
+    latest-plan.md
   health/
+    latest-notification.txt
 ```
 
 The vault is generated runtime state. It should normally be outside the source repository.
@@ -153,7 +167,7 @@ Future adapters can provide scanners for other runtimes while preserving the sam
 
 ## Scheduling model
 
-The v0 scheduling model is daily or manual. A scheduler can invoke `eva-loop` with explicit paths and deliver the resulting brief through a local channel. EVA does not need a live node by default because durable logs and profile stores are sufficient for the initial evidence loop.
+The v0 scheduling model is daily or manual. A scheduler can invoke `eva-loop` with explicit paths and deliver the resulting notification summary, brief path, and plan path through a local channel. EVA does not need a live node or open terminal by default because durable logs and profile stores are sufficient for the initial evidence loop. See `docs/scheduling-and-notifications.md`.
 
 Future trigger layers may support event-driven scans or live tailing, but those modes should preserve the same proposal-only boundary and degraded-mode reporting.
 

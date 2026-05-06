@@ -32,6 +32,7 @@ The adapter does not include live local profile state, secrets, chat identifiers
 4. Configure the profile with local tools needed to run `eva-loop` and read profile files.
 5. Set explicit paths when the profile-local home differs from the normal shell home.
 6. Schedule `eva-loop` with `--profiles-dir` and `--vault`.
+7. Configure any notification delivery in the scheduler or Hermes cron job, not in EVA core.
 
 Example command:
 
@@ -44,6 +45,8 @@ eva-loop --profiles-dir /path/to/hermes/profiles --vault /path/to/eva-vault
 ## Scheduling
 
 A daily scan is a reasonable default for the current local-first release. Manual scans are useful before changing runtime configuration or publishing a release. Live tailing is outside the current adapter boundary and should not be enabled without preserving the same proposal-only safety boundary.
+
+EVA does not require an open terminal when a scheduler invokes it. `eva-loop` writes durable vault artifacts and exits. Hermes cron, OS cron, launchd, systemd, or another wrapper owns unattended execution and delivery. The notification-ready artifact is `health/latest-notification.txt`; the operator checklist is `plans/latest-plan.md`. See [docs/scheduling-and-notifications.md](scheduling-and-notifications.md).
 
 ## Committed templates vs local runtime state
 

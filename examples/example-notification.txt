@@ -1,0 +1,7 @@
+EVA scan complete.
+Status: ok
+Findings: config_drift=1, memory_contradictions=1, session_repeated_failures=1, session_tool_failures=2, skill_oversized=1
+Pending proposals: 4
+Plan: /path/to/eva-vault/plans/latest-plan.md
+Brief: /path/to/eva-vault/briefs/latest-brief.md
+Next: review TR-0 scan completeness, then TR-1 artifact review.

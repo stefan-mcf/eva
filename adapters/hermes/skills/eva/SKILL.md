@@ -35,7 +35,8 @@ Use for:
 - scans against Hermes profile stores;
 - empty/degraded/noisy scan diagnosis;
 - source-mutation checks during write-mode tests;
-- generated vault artifact review; and
+- generated vault artifact review;
+- remediation-plan and notification-summary review; and
 - concise tester/operator reports.
 
 Do not use for:
@@ -73,7 +74,7 @@ Allowed reads, when explicitly pointed at them:
 Allowed writes:
 
 - only inside the selected `--vault` during write-mode runs;
-- expected outputs include evidence bundles, compiled profiles, proposals, briefs, health/degraded-scan output, and latest pointers.
+- expected outputs include evidence bundles, compiled profiles, proposals, briefs, remediation plans, notification summaries, health/degraded-scan output, and latest pointers.
 
 Forbidden writes:
 
@@ -193,6 +194,16 @@ python -m json.tool /tmp/eva-run.json >/dev/null
 ```
 
 Write-mode may create vault evidence/profile/proposal/brief/health files. It must not modify `PROFILES_DIR`.
+
+Write-mode also creates remediation-plan and notification-summary artifacts under the vault:
+
+```text
+plans/latest-plan.json
+plans/latest-plan.md
+health/latest-notification.txt
+```
+
+EVA does not require an open terminal when scheduled by Hermes cron, cron, launchd, systemd, or another wrapper. EVA core does not deliver Telegram, Discord, email, or SMS messages by itself; the scheduler/wrapper should read `health/latest-notification.txt` and deliver it through an operator-approved destination.
 
 ### 7. Guard against source mutation
 

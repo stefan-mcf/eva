@@ -37,6 +37,8 @@ REQUIRED_DOCS = [
     'docs/release-readiness.md',
     'docs/skills.md',
     'docs/testing-quickstart.md',
+    'docs/remediation-plans.md',
+    'docs/scheduling-and-notifications.md',
     'docs/history/README.md',
     'adapters/hermes/skills/eva/SKILL.md',
     'LICENSE',

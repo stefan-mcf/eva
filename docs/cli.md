@@ -10,7 +10,7 @@ All commands are local filesystem commands. They do not require network access o
 
 ## `eva-loop`
 
-Purpose: run the full loop: scan memory, sessions, skills, configs; compile an operator profile; generate pending proposals; and compile a brief.
+Purpose: run the full loop: scan memory, sessions, skills, configs; compile an operator profile; generate pending proposals; compile a brief; compile a checklisted remediation plan; and compile a scheduler-friendly notification summary.
 
 Inputs:
 
@@ -23,7 +23,7 @@ Inputs:
 Outputs:
 
 - stdout: brief markdown or JSON bundle.
-- write mode: vault artifacts under `context/`, `proposals/`, and `briefs/`.
+- write mode: vault artifacts under `context/`, `proposals/`, `briefs/`, `plans/`, and `health/`.
 
 Read/write behavior: reads profile stores and optional settings. Writes only to the vault unless `--no-write` is set.
 
@@ -33,7 +33,7 @@ Example:
 eva-loop --profiles-dir /path/to/profiles --vault /path/to/eva-vault
 ```
 
-Expected output shape: a human brief with scanner summaries, or a JSON object with top-level keys `memory`, `sessions`, `skills`, `configs`, `operator_profile`, and `proposal_summary`.
+Expected output shape: a human brief with scanner summaries, or a JSON object with top-level keys `memory`, `sessions`, `skills`, `configs`, `operator_profile`, `proposal_summary`, and `remediation_plan`.
 
 ## `eva-scan-memory`
 
@@ -129,6 +129,30 @@ Example:
 
 ```bash
 eva-compile-brief /path/to/eva-vault/briefs/latest-scan.json
+```
+
+## `eva-compile-plan`
+
+Purpose: compile a checklisted remediation plan from an existing combined scan JSON without rerunning scanners.
+
+Inputs:
+
+- scan bundle JSON path.
+- optional `--vault PATH` for artifact references and write mode.
+- `--json` to print plan JSON.
+- `--markdown` to print plan Markdown; this is the default.
+- `--write` to write `plans/latest-plan.*` artifacts under `--vault`.
+
+Outputs: remediation plan JSON or Markdown on stdout. With `--write`, writes plan artifacts only under the selected vault.
+
+Read/write behavior: reads the scan file. Writes only to `--vault` when `--write` is supplied. `--write` requires `--vault`.
+
+Examples:
+
+```bash
+eva-compile-plan /path/to/eva-vault/briefs/latest-scan.json --markdown
+eva-compile-plan /path/to/eva-vault/briefs/latest-scan.json --json
+eva-compile-plan /path/to/eva-vault/briefs/latest-scan.json --vault /path/to/eva-vault --write
 ```
 
 ## `eva-propose-patches`

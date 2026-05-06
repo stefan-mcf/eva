@@ -32,7 +32,8 @@ EVA currently provides a Hermes adapter that can:
 - scan profile configs for model, delegation, and tooling drift;
 - compile an operator profile from evidence;
 - draft pending optimization proposals for manual approval;
-- compile a concise operator brief; and
+- compile a concise operator brief;
+- generate a checklisted remediation plan plus scheduler-friendly notification summary; and
 - run the full loop from a CLI command or scheduler.
 
 ## What EVA does not do
@@ -57,6 +58,7 @@ Evidence Sources
   → Operator Profile Compiler
   → Proposal Engine
   → Brief Compiler
+  → Remediation Plan Compiler
   → Operator Review
 ```
 
@@ -66,6 +68,7 @@ Runtime flow for the Hermes adapter:
 Hermes profile stores
   → eva-loop
   → EVA Vault artifacts
+  → Remediation Plan + Notification Summary
   → scheduled or manual operator review
 ```
 
@@ -110,7 +113,8 @@ Expected output shape:
   "skills": {"scanner": "skills", "summary": {}},
   "configs": {"scanner": "configs", "summary": {}},
   "operator_profile": {"generated_at": "..."},
-  "proposal_summary": {"proposals": [], "written": []}
+  "proposal_summary": {"proposals": [], "written": []},
+  "remediation_plan": {"schema": "eva-remediation-plan/v1"}
 }
 ```
 
@@ -135,9 +139,10 @@ Installed console scripts:
 - `eva-scan-configs` — profile config scanner.
 - `eva-compile-profile` — operator profile compiler.
 - `eva-compile-brief` — brief compiler.
+- `eva-compile-plan` — remediation plan compiler.
 - `eva-propose-patches` — proposal generator.
 
-See [docs/cli.md](docs/cli.md) for command inputs, outputs, read/write behavior, and examples.
+See [docs/cli.md](docs/cli.md) for command inputs, outputs, read/write behavior, and examples. See [docs/remediation-plans.md](docs/remediation-plans.md) for the remediation-plan contract.
 
 ## Tester guide
 
@@ -157,9 +162,13 @@ EVA uses portable defaults based on the current user's home directory and can be
 
 Runtime thresholds can be supplied with `context/settings.json` in the EVA vault. A template lives at [adapters/hermes/settings.template.json](adapters/hermes/settings.template.json). See [docs/configuration.md](docs/configuration.md).
 
+## Scheduling and notifications
+
+EVA does not require an open terminal when a scheduler invokes it. EVA core writes vault artifacts and a notification-ready text file; Hermes cron, cron, launchd, systemd, or another wrapper owns unattended execution and delivery. See [docs/scheduling-and-notifications.md](docs/scheduling-and-notifications.md).
+
 ## Safety
 
-EVA's core invariant is proposal-only operation. It can write evidence and proposals to an EVA vault in write mode, but it never modifies the source profiles it scans. `--no-write` is a strict dry-run and is covered by tests and the release-readiness script.
+EVA's core invariant is proposal-only operation. It can write evidence, proposals, briefs, remediation plans, and notification summaries to an EVA vault in write mode, but it never modifies the source profiles it scans. `--no-write` is a strict dry-run and is covered by tests and the release-readiness script.
 
 See [docs/safety.md](docs/safety.md) for read/write boundaries, private-data handling, and publication checks.
 
@@ -174,6 +183,9 @@ Synthetic examples are available under [examples/](examples/):
 - [example-scan.json](examples/example-scan.json)
 - [example-proposal.json](examples/example-proposal.json)
 - [example-brief.md](examples/example-brief.md)
+- [example-remediation-plan.md](examples/example-remediation-plan.md)
+- [example-remediation-plan.json](examples/example-remediation-plan.json)
+- [example-notification.txt](examples/example-notification.txt)
 
 They are intentionally generic and contain no live runtime data.
 

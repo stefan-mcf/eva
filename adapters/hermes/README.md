@@ -33,6 +33,9 @@ These files are public templates for running EVA against Hermes profile stores. 
    ```
 
 6. Schedule the command only after confirming `eva-loop --no-write --json` behaves as expected.
+7. If unattended notification is needed, have Hermes cron or a wrapper read `health/latest-notification.txt` after the scan and deliver it through an operator-approved channel.
+
+EVA itself does not require an open terminal when scheduled, and EVA core does not own external delivery. See `../../docs/scheduling-and-notifications.md`.
 
 ## Do not commit
 

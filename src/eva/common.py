@@ -26,6 +26,7 @@ def ensure_vault(vault: Path = EVA_VAULT_DIR) -> Path:
         "proposals/applied",
         "proposals/rejected",
         "briefs",
+        "plans",
         "health",
     ]:
         (vault / rel).mkdir(parents=True, exist_ok=True)

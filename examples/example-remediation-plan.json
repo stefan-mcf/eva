@@ -1,0 +1,268 @@
+{
+  "artifacts": {
+    "brief": "/path/to/eva-vault/briefs/latest-brief.md",
+    "notification": "/path/to/eva-vault/health/latest-notification.txt",
+    "pending_proposals_dir": "/path/to/eva-vault/proposals/pending",
+    "plan_json": "/path/to/eva-vault/plans/latest-plan.json",
+    "plan_markdown": "/path/to/eva-vault/plans/latest-plan.md",
+    "scan": "/path/to/eva-vault/briefs/latest-scan.json"
+  },
+  "generated_at": "2026-05-06T00:00:00+00:00",
+  "operator_inbox": [
+    {
+      "approval_required": true,
+      "checklist": [
+        "Inspect sampled evidence before changing durable memory.",
+        "Merge or rewrite only stable facts that remain useful weeks later.",
+        "Route ambiguous memory changes to operator review instead of auto-applying."
+      ],
+      "commands": [
+        "find /path/to/eva-vault/proposals/pending -maxdepth 1 -type f -name '*memory*.json' | sort"
+      ],
+      "id": "TR-4",
+      "objective": "Review memory contradictions, duplicates, and stale references behind a human approval gate.",
+      "risk": "high",
+      "source_proposal_ids": [
+        "example-memory"
+      ],
+      "title": "Memory cleanup candidates",
+      "verification": [
+        "Approved memory changes are recorded separately from scan/plan generation."
+      ]
+    },
+    {
+      "approval_required": true,
+      "checklist": [
+        "Inspect drift evidence by profile role group.",
+        "Preserve intentional model/tool/delegation lane differences.",
+        "Require explicit approval before changing live profile configs."
+      ],
+      "commands": [
+        "find /path/to/eva-vault/proposals/pending -maxdepth 1 -type f -name '*config*.json' | sort"
+      ],
+      "id": "TR-5",
+      "objective": "Review cross-profile configuration drift and separate intentional lane differences from accidental drift.",
+      "risk": "medium",
+      "source_proposal_ids": [
+        "example-config"
+      ],
+      "title": "Config drift review",
+      "verification": [
+        "Every config action is classified as intentional drift, safe alignment, or blocked."
+      ]
+    },
+    {
+      "approval_required": true,
+      "checklist": [
+        "Review profile signals for stability and privacy.",
+        "Promote only durable preferences or conventions.",
+        "Reject transient task state or operational queue state."
+      ],
+      "commands": [
+        "sed -n '1,200p' /path/to/eva-vault/context/operator-profile.md"
+      ],
+      "id": "TR-6",
+      "objective": "Review compiled operator-profile signals before promoting anything to durable memory or skills.",
+      "risk": "medium",
+      "source_proposal_ids": [],
+      "title": "Operator profile review",
+      "verification": [
+        "Operator-profile outcomes are approved, rejected, or deferred."
+      ]
+    }
+  ],
+  "safety": {
+    "auto_apply": false,
+    "notes": [
+      "EVA remediation plans are checklists, not approval to mutate source runtime state.",
+      "Any workflow that applies changes must be separate and operator-approved."
+    ],
+    "source_mutation_allowed": false
+  },
+  "schema": "eva-remediation-plan/v1",
+  "source_scan_timestamp": "2026-05-06T00:00:00+00:00",
+  "summary": {
+    "finding_counts": {
+      "config_drift": 1,
+      "memory_contradictions": 1,
+      "memory_duplicates": 0,
+      "memory_orphan_references": 0,
+      "session_repeated_failures": 1,
+      "session_tool_failures": 2,
+      "skill_duplicate_names": 0,
+      "skill_high_patch_frequency": 0,
+      "skill_oversized": 1,
+      "skill_stale": 0
+    },
+    "proposal_count": 4,
+    "status": "ok",
+    "total_findings": 6,
+    "tranche_count": 8
+  },
+  "tranches": [
+    {
+      "approval_required": false,
+      "checklist": [
+        "Confirm the latest scan JSON parses successfully.",
+        "Inspect the brief for degraded, partial, or missing-source warnings.",
+        "Confirm profile/source paths and vault paths are the intended ones.",
+        "Stop before remediation if the scan is degraded in a way that affects the target findings."
+      ],
+      "commands": [
+        "python -m json.tool /path/to/eva-vault/briefs/latest-scan.json >/dev/null",
+        "sed -n '1,160p' /path/to/eva-vault/briefs/latest-brief.md"
+      ],
+      "id": "TR-0",
+      "objective": "Confirm the scan is safe to act on before any remediation work starts.",
+      "risk": "low",
+      "source_proposal_ids": [],
+      "title": "Verify scan completeness",
+      "verification": [
+        "Validated scan JSON and reviewed the latest brief."
+      ]
+    },
+    {
+      "approval_required": false,
+      "checklist": [
+        "Open the latest remediation plan and brief.",
+        "List pending proposal JSON files.",
+        "Classify findings as true positive, weak signal, false positive, or unsafe."
+      ],
+      "commands": [
+        "find /path/to/eva-vault/proposals/pending -maxdepth 1 -type f -name '*.json' | sort",
+        "sed -n '1,220p' /path/to/eva-vault/plans/latest-plan.md"
+      ],
+      "id": "TR-1",
+      "objective": "Inspect generated EVA artifacts and identify which proposals need operator action.",
+      "risk": "low",
+      "source_proposal_ids": [],
+      "title": "Review low-risk generated artifacts",
+      "verification": [
+        "All generated artifacts were reviewed before any source mutation."
+      ]
+    },
+    {
+      "approval_required": false,
+      "checklist": [
+        "Inspect skill-related proposal evidence.",
+        "Prefer concise SKILL.md patches with supporting details moved into references/.",
+        "Do not patch live skills until the relevant proposal is approved."
+      ],
+      "commands": [
+        "find /path/to/eva-vault/proposals/pending -maxdepth 1 -type f -name '*skill*.json' | sort"
+      ],
+      "id": "TR-2",
+      "objective": "Review oversized, stale, duplicate, or frequently patched skills and prepare safe maintenance work.",
+      "risk": "low",
+      "source_proposal_ids": [
+        "example-skill"
+      ],
+      "title": "Skill maintenance candidates",
+      "verification": [
+        "Skill maintenance candidates have explicit target files and review notes."
+      ]
+    },
+    {
+      "approval_required": false,
+      "checklist": [
+        "Group repeated failures by tool and failure mode.",
+        "Patch an existing troubleshooting skill when the failure is recurring and understood.",
+        "Keep unknown/noisy failures as investigation notes until evidence is sufficient."
+      ],
+      "commands": [
+        "find /path/to/eva-vault/proposals/pending -maxdepth 1 -type f -name '*tool*.json' | sort"
+      ],
+      "id": "TR-3",
+      "objective": "Convert repeated tool failures into targeted runbook or skill hardening proposals.",
+      "risk": "low",
+      "source_proposal_ids": [
+        "example-tool"
+      ],
+      "title": "Tool failure runbook candidates",
+      "verification": [
+        "Each runbook candidate is backed by repeated evidence or explicitly deferred."
+      ]
+    },
+    {
+      "approval_required": true,
+      "checklist": [
+        "Inspect sampled evidence before changing durable memory.",
+        "Merge or rewrite only stable facts that remain useful weeks later.",
+        "Route ambiguous memory changes to operator review instead of auto-applying."
+      ],
+      "commands": [
+        "find /path/to/eva-vault/proposals/pending -maxdepth 1 -type f -name '*memory*.json' | sort"
+      ],
+      "id": "TR-4",
+      "objective": "Review memory contradictions, duplicates, and stale references behind a human approval gate.",
+      "risk": "high",
+      "source_proposal_ids": [
+        "example-memory"
+      ],
+      "title": "Memory cleanup candidates",
+      "verification": [
+        "Approved memory changes are recorded separately from scan/plan generation."
+      ]
+    },
+    {
+      "approval_required": true,
+      "checklist": [
+        "Inspect drift evidence by profile role group.",
+        "Preserve intentional model/tool/delegation lane differences.",
+        "Require explicit approval before changing live profile configs."
+      ],
+      "commands": [
+        "find /path/to/eva-vault/proposals/pending -maxdepth 1 -type f -name '*config*.json' | sort"
+      ],
+      "id": "TR-5",
+      "objective": "Review cross-profile configuration drift and separate intentional lane differences from accidental drift.",
+      "risk": "medium",
+      "source_proposal_ids": [
+        "example-config"
+      ],
+      "title": "Config drift review",
+      "verification": [
+        "Every config action is classified as intentional drift, safe alignment, or blocked."
+      ]
+    },
+    {
+      "approval_required": true,
+      "checklist": [
+        "Review profile signals for stability and privacy.",
+        "Promote only durable preferences or conventions.",
+        "Reject transient task state or operational queue state."
+      ],
+      "commands": [
+        "sed -n '1,200p' /path/to/eva-vault/context/operator-profile.md"
+      ],
+      "id": "TR-6",
+      "objective": "Review compiled operator-profile signals before promoting anything to durable memory or skills.",
+      "risk": "medium",
+      "source_proposal_ids": [],
+      "title": "Operator profile review",
+      "verification": [
+        "Operator-profile outcomes are approved, rejected, or deferred."
+      ]
+    },
+    {
+      "approval_required": false,
+      "checklist": [
+        "Rerun a strict no-write scan after remediation.",
+        "Compare finding counts before and after approved changes.",
+        "Record proposal outcomes as applied, rejected, or deferred only after review."
+      ],
+      "commands": [
+        "eva-loop --profiles-dir /path/to/hermes/profiles --vault /path/to/eva-vault --no-write --json >/tmp/eva-verify.json",
+        "python -m json.tool /tmp/eva-verify.json >/dev/null"
+      ],
+      "id": "TR-7",
+      "objective": "Rerun EVA and record proposal outcomes after approved remediation work is complete.",
+      "risk": "low",
+      "source_proposal_ids": [],
+      "title": "Final verification and outcome recording",
+      "verification": [
+        "Post-remediation scan and proposal outcome records exist."
+      ]
+    }
+  ]
+}

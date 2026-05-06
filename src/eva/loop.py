@@ -17,6 +17,11 @@ from eva.common import (
 )
 from eva.compilers.compile_brief import compile_brief
 from eva.compilers.compile_profile import compile_profile
+from eva.compilers.compile_remediation_plan import (
+    compile_remediation_plan,
+    write_notification_summary,
+    write_remediation_plan,
+)
 from eva.proposers.propose_patches import generate_proposals, write_pending
 from eva.scanners import scan_configs, scan_memory, scan_sessions, scan_shyftr, scan_skills
 
@@ -55,6 +60,8 @@ def run_all(
     bundle["operator_profile"] = profile
     bundle["proposal_summary"] = {"proposals": proposals, "written": [str(p) for p in paths]}
     brief = compile_brief(bundle)
+    plan = compile_remediation_plan(bundle, vault_path if write else None)
+    bundle["remediation_plan"] = plan
     if write:
         latest = vault_path / "briefs" / "latest-scan.json"
         latest_brief = vault_path / "briefs" / "latest-brief.md"
@@ -63,6 +70,8 @@ def run_all(
         atomic_write_text(latest_brief, brief)
         atomic_write_json(vault_path / "briefs" / f"scan-{stamp}.json", bundle)
         atomic_write_text(vault_path / "briefs" / f"brief-{stamp}.md", brief)
+        bundle["remediation_plan_paths"] = write_remediation_plan(plan, vault_path, stamp=stamp)
+        bundle["notification_summary_path"] = write_notification_summary(plan, vault_path)
     bundle["brief"] = brief
     return bundle
 
