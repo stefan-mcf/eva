@@ -6,8 +6,8 @@ EVA observes durable records from an agent system, turns them into structured ev
 
 ## Status
 
-- Project status: pre-alpha, functional v0.
-- Runtime support: Hermes adapter first; additional adapters are future work.
+- Project status: local-first evidence and verification toolkit.
+- Runtime support: Hermes adapter first, with runtime-specific adapters kept behind explicit integration boundaries.
 - Runtime dependencies: Python standard library only.
 - Development tools: pytest, Ruff, setuptools/build.
 - Safety stance: read-mostly and proposal-only.
@@ -41,7 +41,7 @@ EVA does **not**:
 
 - automatically edit memories, skills, configs, source code, or runtime profiles;
 - send proposals as if they were approved changes;
-- require a live daemon or tail logs in real time for v0;
+- require a live daemon or tail logs in real time for the current local-first release;
 - publish telemetry to an external service;
 - require credentials for local checks; or
 - treat a single observation as enough evidence for a durable rule.

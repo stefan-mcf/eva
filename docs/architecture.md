@@ -13,7 +13,7 @@ EVA is an evidence and verification layer for agent runtimes. It converts durabl
 ## Non-goals
 
 - EVA is not a self-modifying agent.
-- EVA is not a real-time observability backend in v0.
+- EVA is not a real-time observability backend in the current local-first release.
 - EVA is not tied conceptually to Hermes, even though Hermes is the first adapter.
 - EVA does not publish telemetry to external services.
 - EVA does not replace operator judgment or approval.
@@ -25,7 +25,7 @@ EVA is an evidence and verification layer for agent runtimes. It converts durabl
 - **evidence-backed:** proposals should cite durable observations and avoid one-off conclusions.
 - **adapter-separated:** runtime-specific concerns live behind adapter docs and templates.
 - **portable by default:** defaults use home-relative paths and environment variables.
-- **no live daemon in v0:** periodic/manual scans over durable logs are the default.
+- **no live daemon in the current local-first release:** periodic/manual scans over durable logs are the default.
 
 ## Conceptual architecture
 

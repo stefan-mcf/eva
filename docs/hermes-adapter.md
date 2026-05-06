@@ -34,7 +34,7 @@ eva-loop --profiles-dir /path/to/hermes/profiles --vault /path/to/eva-vault
 
 ## Scheduling
 
-A daily scan is a reasonable default for v0. Manual scans are useful before changing runtime configuration or publishing a release. Live tailing is future work and should not be enabled without preserving the same proposal-only safety boundary.
+A daily scan is a reasonable default for the current local-first release. Manual scans are useful before changing runtime configuration or publishing a release. Live tailing is outside the current adapter boundary and should not be enabled without preserving the same proposal-only safety boundary.
 
 ## Committed templates vs local runtime state
 
