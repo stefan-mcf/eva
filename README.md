@@ -157,8 +157,7 @@ They are intentionally generic and contain no live runtime data.
 ## Development
 
 ```bash
-python3 -m pip install -e .
-python3 -m pip install pytest ruff build twine
+python3 -m pip install -e '.[dev]'
 python3 -m ruff check .
 python3 -m pytest -q
 python3 -m compileall -q src tests

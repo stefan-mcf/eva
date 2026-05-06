@@ -149,14 +149,17 @@ def run_required_commands() -> None:
 def check_build_if_available() -> None:
     result = subprocess.run([sys.executable, '-m', 'build', '--version'], cwd=ROOT, text=True, capture_output=True)
     if result.returncode != 0:
-        print('SKIP package build check: build module not installed')
+        print('SKIP package build check: build module not installed; install dev extras with: python -m pip install -e ".[dev]"')
         return
     subprocess.run([sys.executable, '-m', 'build'], cwd=ROOT, text=True, check=True)
     twine = subprocess.run([sys.executable, '-m', 'twine', '--version'], cwd=ROOT, text=True, capture_output=True)
     if twine.returncode == 0:
-        subprocess.run([sys.executable, '-m', 'twine', 'check', 'dist/*'], cwd=ROOT, shell=False, text=True, check=True)
+        dist_files = sorted(str(path) for path in (ROOT / 'dist').glob('*'))
+        if not dist_files:
+            fail('package build produced no dist artifacts')
+        subprocess.run([sys.executable, '-m', 'twine', 'check', *dist_files], cwd=ROOT, text=True, check=True)
     else:
-        print('SKIP twine check: twine module not installed')
+        print('SKIP twine check: twine module not installed; install dev extras with: python -m pip install -e ".[dev]"')
 
 
 def main() -> None:

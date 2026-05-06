@@ -4,7 +4,10 @@ This checklist is the publication gate for EVA. Run it before making the reposit
 
 ## Local verification
 
+Install the development extras first so local readiness checks can run the same package/build tooling documented for CI and release review:
+
 ```bash
+python3 -m pip install -e '.[dev]'
 python3 -m ruff check .
 python3 -m pytest -q
 python3 -m compileall -q src tests
@@ -28,6 +31,15 @@ python3 -m pip install build twine
 rm -rf dist build *.egg-info src/*.egg-info
 python3 -m build
 python3 -m twine check dist/*
+```
+
+## Dependency license inventory
+
+EVA currently has no runtime dependencies, so the runtime dependency-license inventory is empty. If runtime dependencies are added later, install a license inventory tool and record the result before tagging a release:
+
+```bash
+python3 -m pip install pip-licenses
+python3 -m piplicenses --format=markdown --with-urls
 ```
 
 ## Privacy and public-surface checks
