@@ -30,20 +30,48 @@ def _slug(text: str) -> str:
     return keep.strip("-")[:80] or "proposal"
 
 
-def _proposal(kind: str, title: str, evidence: list[dict[str, Any]], recommendation: str, payload: dict[str, Any] | None = None) -> dict[str, Any]:
+def _proposal(
+    kind: str,
+    title: str,
+    evidence: list[dict[str, Any]],
+    recommendation: str,
+    payload: dict[str, Any] | None = None,
+    *,
+    confidence: str = "medium",
+    false_positive_risk: str = "medium",
+    requires_human_gate: bool = True,
+    suggested_tranche: int | None = None,
+    disposition: str = "operator_decision",
+) -> dict[str, Any]:
+    evidence_total = len(evidence)
+    sampled = min(evidence_total, 10)
+    created_at = utc_now()
+    payload = dict(payload or {})
     return {
-        "id": f"{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}-{_slug(title)}",
+        "id": f"{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}-{kind}-{_slug(title)}",
         "kind": kind,
         "status": "pending",
-        "created_at": utc_now(),
+        "created_at": created_at,
         "title": title,
         "summary": recommendation,
         "evidence": evidence[:10],
+        "evidence_count_total": evidence_total,
+        "sampled_count": sampled,
+        "confidence": confidence,
+        "false_positive_risk": false_positive_risk,
+        "requires_human_gate": requires_human_gate,
+        "suggested_tranche": suggested_tranche,
+        "disposition": disposition,
         "recommendation": recommendation,
-        "payload": payload or {},
+        "payload": payload,
+        "metadata": {
+            "dedupe_key": f"{kind}:{title}",
+            "baseline_timestamp": payload.get("baseline_timestamp"),
+            "generated_at": created_at,
+        },
         "safety": {
             "auto_apply": False,
-            "operator_approval_required": True,
+            "operator_approval_required": requires_human_gate,
             "notes": "Review manually before changing memory, skills, config, or profile files.",
         },
     }
@@ -94,6 +122,10 @@ def generate_proposals(
                 contradictions,
                 "Merge or rewrite contradictory memory entries so future sessions receive one clear rule.",
                 {"candidate_count": len(contradictions)},
+                confidence="medium",
+                false_positive_risk="high",
+                suggested_tranche=6,
+                disposition="operator_decision",
             )
         )
 
@@ -106,6 +138,10 @@ def generate_proposals(
                 orphans,
                 "Remove, qualify, or update stale references that no longer reflect active project state.",
                 {"candidate_count": len(orphans)},
+                confidence="medium",
+                false_positive_risk="medium",
+                suggested_tranche=6,
+                disposition="operator_decision",
             )
         )
 
@@ -118,6 +154,10 @@ def generate_proposals(
                 repeated_failures,
                 "Add targeted troubleshooting notes or skills for tools that fail repeatedly across sessions.",
                 {"top_tools": repeated_failures[:10]},
+                confidence="medium",
+                false_positive_risk="medium",
+                suggested_tranche=8,
+                disposition="operator_decision",
             )
         )
 
@@ -130,6 +170,10 @@ def generate_proposals(
                 oversized,
                 "Move long supporting material from oversized SKILL.md files into references/ and keep the main skill lean.",
                 {"oversized_threshold_bytes": skills.get("health", {}).get("oversized_threshold_bytes")},
+                confidence="high",
+                false_positive_risk="low",
+                suggested_tranche=7,
+                disposition="operator_decision",
             )
         )
 
@@ -141,6 +185,10 @@ def generate_proposals(
                 "Rewrite frequently patched skills",
                 high_patch,
                 "Consolidate heavily patched skills into cleaner procedures to reduce future patch churn.",
+                confidence="low",
+                false_positive_risk="high",
+                suggested_tranche=7,
+                disposition="operator_decision",
             )
         )
 
@@ -153,6 +201,10 @@ def generate_proposals(
                 drift,
                 "Align configs where profiles share a role and drift is accidental; preserve intentional model-lane differences.",
                 {"drift_count": len(drift)},
+                confidence="medium",
+                false_positive_risk="medium",
+                suggested_tranche=9,
+                disposition="operator_decision",
             )
         )
 
@@ -163,11 +215,18 @@ def generate_proposals(
                 "Approve EVA operator-profile draft",
                 [{"source": "operator-profile", "evidence": safe_snippet(json.dumps(operator_profile.get("preferences", {})), 500)}],
                 "Review the generated operator profile and promote only stable, high-confidence items to durable memory or skills.",
+                confidence="medium",
+                false_positive_risk="medium",
+                suggested_tranche=10,
+                disposition="operator_decision",
             )
         )
 
+    suppressed_kinds = set(settings.get("proposals", {}).get("suppressed_kinds", []))
+    proposals = [proposal for proposal in proposals if proposal.get("kind") not in suppressed_kinds]
+
     for proposal in proposals:
-        evidence_count = len(proposal.get("evidence", [])) or int(proposal.get("payload", {}).get("candidate_count", 0) or 0)
+        evidence_count = int(proposal.get("evidence_count_total") or len(proposal.get("evidence", [])) or proposal.get("payload", {}).get("candidate_count", 0) or 0)
         proposal["priority_score"] = _score(proposal.get("kind", "unknown"), evidence_count, history, settings)
         proposal["acceptance_history"] = history.get(proposal.get("kind", "unknown"), {"applied": 0, "rejected": 0})
     proposals.sort(key=lambda p: p.get("priority_score", 0), reverse=True)

@@ -38,7 +38,7 @@ def run_all(
     memory = scan_memory.run_scan(str(profiles_dir), vault=vault_path)
     sessions = scan_sessions.run_scan(profiles_dir, days=days, vault=vault_path if write else None)
     skills = scan_skills.run_scan(profiles_dir, vault=vault_path)
-    configs = scan_configs.run_scan(profiles_dir)
+    configs = scan_configs.run_scan(profiles_dir, vault=vault_path)
     shyftr = scan_shyftr.run_scan()
     bundle: dict[str, Any] = {
         "scanner": "combined",

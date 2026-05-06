@@ -2,12 +2,20 @@
 from __future__ import annotations
 
 import json
+import os
 from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-DEFAULT_CELL = Path("/Users/stefan/.hermes/shyftr/cells/hermes-memory")
+from eva.common import HERMES_PROFILES_DIR
+
+DEFAULT_CELL = Path(
+    os.environ.get(
+        "EVA_SHYFTR_CELL",
+        Path.home() / ".hermes" / "shyftr" / "cells" / "hermes-memory",
+    )
+).expanduser()
 
 
 def _read_jsonl(path: Path) -> list[dict[str, Any]]:
@@ -56,7 +64,7 @@ def run_scan(cell: str | Path = DEFAULT_CELL, vault: str | Path | None = None) -
     profile_modes: dict[str, str] = {}
     runtime_primary_profiles: list[str] = []
     bounded_primary_profiles: list[str] = []
-    profiles_dir = Path("/Users/stefan/.hermes/profiles")
+    profiles_dir = HERMES_PROFILES_DIR
     if profiles_dir.exists():
         for cfg in profiles_dir.glob("*/shyftr.json"):
             try:

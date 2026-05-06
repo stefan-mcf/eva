@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from eva.common import HERMES_PROFILES_DIR, profile_dirs, utc_now
+from eva.settings import load_settings
 
 WATCH_KEYS = [
     "model.default",
@@ -74,7 +75,12 @@ def _get(data: dict[str, Any], dotted: str) -> Any:
     return cur
 
 
-def _role_group(profile: str) -> str:
+def _role_group(profile: str, role_groups: dict[str, Any] | None = None) -> str:
+    for group, rule in (role_groups or {}).items():
+        names = set(rule.get("names", [])) if isinstance(rule, dict) else set()
+        prefixes = tuple(rule.get("prefixes", [])) if isinstance(rule, dict) else ()
+        if profile in names or (prefixes and profile.startswith(prefixes)):
+            return group
     if profile.startswith("swarm"):
         return "swarm"
     if profile.startswith("worker-"):
@@ -86,21 +92,38 @@ def _role_group(profile: str) -> str:
     return "other"
 
 
+def _is_ignored_drift(group: str, key: str, ignored: list[dict[str, Any]]) -> bool:
+    for item in ignored:
+        if not isinstance(item, dict):
+            continue
+        if item.get("role_group") in {group, "*"} and item.get("key") in {key, "*"}:
+            return True
+    return False
+
+
 def discover_configs(base: Path = HERMES_PROFILES_DIR) -> list[Path]:
     return [p / "config.yaml" for p in profile_dirs(base) if (p / "config.yaml").exists()]
 
 
-def run_scan(base: str | Path = HERMES_PROFILES_DIR) -> dict[str, Any]:
+def run_scan(base: str | Path = HERMES_PROFILES_DIR, vault: str | Path | None = None) -> dict[str, Any]:
+    settings = (
+        load_settings(vault).get("configs", {})
+        if vault is not None
+        else load_settings().get("configs", {})
+    )
+    role_groups = settings.get("role_groups", {})
+    ignored_drift = settings.get("ignored_drift", [])
     configs = []
     for path in discover_configs(Path(base)):
         profile = path.parent.name
         try:
             data = _simple_yaml(path)
             values = {key: _get(data, key) for key in WATCH_KEYS}
-            configs.append({"profile": profile, "role_group": _role_group(profile), "path": str(path), "values": values})
+            configs.append({"profile": profile, "role_group": _role_group(profile, role_groups), "path": str(path), "values": values})
         except Exception as exc:
             configs.append({"profile": profile, "path": str(path), "status": "degraded", "error": f"{type(exc).__name__}: {exc}"})
 
+    raw_drift = []
     drift = []
     by_group: defaultdict[str, list[dict[str, Any]]] = defaultdict(list)
     for c in configs:
@@ -114,7 +137,10 @@ def run_scan(base: str | Path = HERMES_PROFILES_DIR) -> dict[str, Any]:
             for item in items:
                 vals[repr(item["values"].get(key))].append(item["profile"])
             if len(vals) > 1:
-                drift.append({"role_group": group, "key": key, "values": dict(vals)})
+                rec = {"role_group": group, "key": key, "values": dict(vals)}
+                raw_drift.append(rec)
+                if not _is_ignored_drift(group, key, ignored_drift):
+                    drift.append(rec)
 
     model_matrix = [
         {
@@ -134,13 +160,18 @@ def run_scan(base: str | Path = HERMES_PROFILES_DIR) -> dict[str, Any]:
         "summary": {
             "profiles_scanned": len(configs),
             "drift_findings": len(drift),
+            "raw_drift_findings": len(raw_drift),
+            "ignored_drift_findings": len(raw_drift) - len(drift),
             "watch_keys": len(WATCH_KEYS),
         },
         "model_matrix": model_matrix,
         "drift": drift[:200],
+        "raw_drift": raw_drift[:200],
         "health": {
             "config_scanner": "simple YAML parser, read-only",
             "scope": "model, agent, terminal, delegation, compression",
+            "role_groups_configured": sorted(role_groups),
+            "ignored_drift_rules": len(ignored_drift),
         },
     }
 

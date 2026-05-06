@@ -23,15 +23,45 @@ DEFAULT_SETTINGS: dict[str, Any] = {
         ],
         "orphan_keywords": ["antaeus", "antaeus-terminal", "antaeus-terminal-side", "courier", "shyftr"],
         "duplicate_similarity_threshold": 0.85,
+        "contradiction_context_exceptions": [
+            {
+                "keywords": ["public", "private"],
+                "phrases": ["private wip", "public-facing", "public release", "private-to-public"],
+            },
+            {
+                "keywords": ["antaeus", "dead"],
+                "phrases": ["shelved", "dead", "phased out", "not active"],
+            },
+            {
+                "keywords": ["lab", "no lab"],
+                "phrases": ["naming", "repo", "boundary", "public"],
+            },
+        ],
     },
     "skills": {
         "oversized_bytes": 80000,
         "stale_days": 30,
         "high_patch_threshold": 3,
+        "include_archived_in_priority": False,
+        "archive_path_markers": ["/.archive/", "/archive/"],
     },
     "sessions": {
         "window_days": 30,
         "repeated_failure_threshold": 3,
+        "failure_sample_limit": 50,
+        "tool_failure_roles": ["tool"],
+    },
+    "configs": {
+        "role_groups": {
+            "swarm": {"prefixes": ["swarm"]},
+            "worker": {"prefixes": ["worker-"]},
+            "antaeus-terminal": {"prefixes": ["antaeus-terminal"]},
+            "default": {"names": ["default"]},
+            "eva": {"names": ["eva"]},
+            "courier": {"names": ["courier"]},
+            "reviewer": {"names": ["reviewer"]}
+        },
+        "ignored_drift": []
     },
     "brief": {
         "max_examples": 10,

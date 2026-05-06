@@ -1,23 +1,145 @@
 {
-  "memory": {
-    "duplicate_similarity_threshold": 0.85,
-    "orphan_keywords": ["antaeus", "antaeus-terminal", "antaeus-terminal-side", "courier", "shyftr"]
-  },
-  "sessions": {
-    "window_days": 30,
-    "repeated_failure_threshold": 3
-  },
-  "skills": {
-    "oversized_bytes": 80000,
-    "stale_days": 30,
-    "high_patch_threshold": 3
-  },
   "brief": {
     "max_examples": 10,
     "style": "telegram-concise"
   },
+  "configs": {
+    "ignored_drift": [],
+    "role_groups": {
+      "antaeus-terminal": {
+        "prefixes": [
+          "antaeus-terminal"
+        ]
+      },
+      "courier": {
+        "names": [
+          "courier"
+        ]
+      },
+      "default": {
+        "names": [
+          "default"
+        ]
+      },
+      "eva": {
+        "names": [
+          "eva"
+        ]
+      },
+      "reviewer": {
+        "names": [
+          "reviewer"
+        ]
+      },
+      "swarm": {
+        "prefixes": [
+          "swarm"
+        ]
+      },
+      "worker": {
+        "prefixes": [
+          "worker-"
+        ]
+      }
+    }
+  },
+  "memory": {
+    "contradiction_context_exceptions": [
+      {
+        "keywords": [
+          "public",
+          "private"
+        ],
+        "phrases": [
+          "private wip",
+          "public-facing",
+          "public release",
+          "private-to-public"
+        ]
+      },
+      {
+        "keywords": [
+          "antaeus",
+          "dead"
+        ],
+        "phrases": [
+          "shelved",
+          "dead",
+          "phased out",
+          "not active"
+        ]
+      },
+      {
+        "keywords": [
+          "lab",
+          "no lab"
+        ],
+        "phrases": [
+          "naming",
+          "repo",
+          "boundary",
+          "public"
+        ]
+      }
+    ],
+    "contradiction_keywords": [
+      [
+        "always",
+        "never",
+        "Direct contradiction"
+      ],
+      [
+        "public",
+        "private",
+        "Visibility contradiction"
+      ],
+      [
+        "ssh",
+        "do not ssh",
+        "SSH access contradiction"
+      ],
+      [
+        "antaeus",
+        "dead",
+        "Project lifecycle contradiction"
+      ],
+      [
+        "lab",
+        "no lab",
+        "Naming convention contradiction"
+      ]
+    ],
+    "duplicate_similarity_threshold": 0.85,
+    "orphan_keywords": [
+      "antaeus",
+      "antaeus-terminal",
+      "antaeus-terminal-side",
+      "courier",
+      "shyftr"
+    ]
+  },
   "proposals": {
     "acceptance_bonus": 0.2,
-    "rejection_penalty": 0.3
+    "rejection_penalty": 0.3,
+    "suppressed_kinds": [],
+    "suppression_reason": "Optional list of proposal kinds muted after explicit operator outcome; leave empty by default."
+  },
+  "sessions": {
+    "failure_sample_limit": 50,
+    "repeated_failure_threshold": 3,
+    "tool_failure_roles": [
+      "tool"
+    ],
+    "window_days": 30
+  },
+  "skills": {
+    "archive_path_markers": [
+      "/.archive/",
+      "/archive/"
+    ],
+    "high_patch_threshold": 3,
+    "include_archived_in_priority": false,
+    "oversized_bytes": 80000,
+    "stale_days": 30
   }
 }

@@ -201,3 +201,154 @@ def test_loop_no_write_does_not_create_or_modify_files(tmp_path: Path) -> None:
 
     assert "brief" in bundle
     assert not vault.exists()
+
+
+
+def test_memory_scanner_suppresses_contextual_public_private_false_positive(tmp_path: Path) -> None:
+    memories = tmp_path / "profiles" / "p1" / "memories"
+    memories.mkdir(parents=True)
+    memories.joinpath("MEMORY.md").write_text(
+        "Worker-patterns: lab=private WIP.\n§\nPublic-facing repo releases require runtime-neutral docs.\n",
+        encoding="utf-8",
+    )
+
+    result = scan_memory.run_scan(str(tmp_path / "profiles"))
+
+    assert not result["contradictions"]
+    assert result["health"]["contradiction_context_exception_rules"] >= 1
+
+
+def test_memory_scanner_still_flags_true_public_private_conflict(tmp_path: Path) -> None:
+    memories = tmp_path / "profiles" / "p1" / "memories"
+    memories.mkdir(parents=True)
+    memories.joinpath("MEMORY.md").write_text(
+        "Always make this repo public.\n§\nNever make this repo private.\n",
+        encoding="utf-8",
+    )
+
+    result = scan_memory.run_scan(str(tmp_path / "profiles"))
+
+    assert result["contradictions"]
+
+
+def test_skill_scanner_separates_archived_bloat_from_active_priority(tmp_path: Path) -> None:
+    active = tmp_path / "p1" / "skills" / "small" / "SKILL.md"
+    archived = tmp_path / "p1" / "skills" / ".archive" / "big" / "SKILL.md"
+    active.parent.mkdir(parents=True)
+    archived.parent.mkdir(parents=True)
+    active.write_text("---\nname: small\ndescription: Small\n---\nsmall", encoding="utf-8")
+    archived.write_text("---\nname: big\ndescription: Big\n---\n" + "x" * 81000, encoding="utf-8")
+
+    result = scan_skills.run_scan(tmp_path)
+
+    assert result["summary"]["active_skills_scanned"] == 1
+    assert result["summary"]["archived_skills_scanned"] == 1
+    assert result["summary"]["oversized_count"] == 0
+    assert result["summary"]["archived_oversized_count"] == 1
+
+
+def test_session_scanner_ignores_ordinary_user_error_text(tmp_path: Path) -> None:
+    _write_state_db(
+        tmp_path / "p1",
+        [
+            ("user", "I saw an error in a blog post, but this is not a tool output.", None, 2000000001),
+        ],
+    )
+
+    result = scan_sessions.run_scan(tmp_path, days=99999)
+
+    assert result["summary"]["tool_failures_found"] == 0
+
+
+def test_session_scanner_infers_tool_from_structured_json_content(tmp_path: Path) -> None:
+    _write_state_db(
+        tmp_path / "p1",
+        [
+            ("assistant", json.dumps({"tool_name": "terminal", "exit_code": 1, "error": "failed"}), None, 2000000001),
+        ],
+    )
+
+    result = scan_sessions.run_scan(tmp_path, days=99999)
+
+    assert result["summary"]["tool_failures_found"] == 1
+    assert result["repeated_failures"] == []
+    assert result["profiles"][0]["tool_failures"][0]["tool"] == "terminal"
+
+
+def test_config_scanner_can_ignore_known_intentional_drift(tmp_path: Path) -> None:
+    vault = tmp_path / "vault"
+    _write_settings(
+        vault,
+        {"configs": {"ignored_drift": [{"role_group": "swarm", "key": "model.default"}]}},
+    )
+    for name, model in [("swarm1", "a"), ("swarm2", "b")]:
+        cfg = tmp_path / "profiles" / name / "config.yaml"
+        cfg.parent.mkdir(parents=True)
+        cfg.write_text(f"model:\n  default: {model}\n  provider: deepseek\n", encoding="utf-8")
+
+    result = scan_configs.run_scan(tmp_path / "profiles", vault=vault)
+
+    assert result["summary"]["raw_drift_findings"] == 1
+    assert result["summary"]["drift_findings"] == 0
+    assert result["raw_drift"]
+
+
+def test_proposals_include_hardening_metadata(tmp_path: Path) -> None:
+    bundle = {
+        "memory": {"contradictions": [{"reason": "x"}], "orphan_references": []},
+        "sessions": {"repeated_failures": []},
+        "skills": {"oversized_skills": [{"name": "big"}], "high_patch_frequency": []},
+        "configs": {"drift": []},
+    }
+
+    proposals = generate_proposals(bundle, vault=tmp_path)
+
+    assert proposals
+    for proposal in proposals:
+        assert "evidence_count_total" in proposal
+        assert "sampled_count" in proposal
+        assert "confidence" in proposal
+        assert "false_positive_risk" in proposal
+        assert proposal["requires_human_gate"] is True
+        assert proposal["disposition"] in {"operator_decision", "scanner_fix", "noop", "apply_patch", "defer"}
+
+
+def test_memory_scanner_does_not_flag_legacy_qualified_references(tmp_path: Path) -> None:
+    memories = tmp_path / "profiles" / "p1" / "memories"
+    memories.mkdir(parents=True)
+    memories.joinpath("MEMORY.md").write_text(
+        "Legacy Antaeus profile names may still denote active Hermes infrastructure.\n",
+        encoding="utf-8",
+    )
+
+    result = scan_memory.run_scan(str(tmp_path / "profiles"))
+
+    assert result["orphan_references"] == []
+
+
+def test_skill_scanner_does_not_count_shared_symlink_copies_as_duplicates(tmp_path: Path) -> None:
+    canonical = tmp_path / "shared" / "skills" / "demo" / "SKILL.md"
+    canonical.parent.mkdir(parents=True)
+    canonical.write_text("---\nname: demo\ndescription: Demo\n---\n", encoding="utf-8")
+    for profile in ("p1", "p2"):
+        link_parent = tmp_path / "profiles" / profile
+        link_parent.mkdir(parents=True)
+        link_parent.joinpath("skills").symlink_to(tmp_path / "shared" / "skills")
+
+    result = scan_skills.run_scan(tmp_path / "profiles")
+
+    assert result["summary"]["duplicate_name_count"] == 0
+
+
+def test_proposer_suppresses_operator_resolved_kinds_from_settings(tmp_path: Path) -> None:
+    settings_dir = tmp_path / "context"
+    settings_dir.mkdir(parents=True)
+    settings_dir.joinpath("settings.json").write_text(
+        '{"proposals": {"suppressed_kinds": ["tool_failure_runbook"]}}',
+        encoding="utf-8",
+    )
+    scan_bundle = {"sessions": {"repeated_failures": [{"tool": "terminal", "count": 5}]}}
+
+    proposals = generate_proposals(scan_bundle, vault=tmp_path)
+
+    assert proposals == []

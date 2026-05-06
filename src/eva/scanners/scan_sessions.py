@@ -133,9 +133,11 @@ def scan_database(db: Path, days: int = 30, repeated_failure_threshold: int = 3)
             if matched:
                 corrections.append({**base, "patterns": matched[:3], "text": safe_snippet(content)})
 
-        for pat in FAILURE_PATTERNS:
-            if pat.search(blob):
-                tool = row["tool_name"] or _infer_tool(tool_calls) or "unknown"
+        if _is_tool_failure_context(row["role"], row["tool_name"], tool_calls, content):
+            for pat in FAILURE_PATTERNS:
+                if not pat.search(blob):
+                    continue
+                tool = row["tool_name"] or _infer_tool(tool_calls) or _infer_tool(content) or "unknown"
                 rec = {
                     **base,
                     "tool": tool,
@@ -168,6 +170,23 @@ def scan_database(db: Path, days: int = 30, repeated_failure_threshold: int = 3)
     }
 
 
+def _is_tool_failure_context(role: str | None, tool_name: str | None, tool_calls: str, content: str) -> bool:
+    if role == "tool" or tool_name:
+        return True
+    if tool_calls and _infer_tool(tool_calls):
+        return True
+    stripped = (content or "").lstrip()
+    if not stripped.startswith(("{", "[")):
+        return False
+    try:
+        parsed = json.loads(stripped)
+    except Exception:
+        return False
+    if isinstance(parsed, dict):
+        return any(k in parsed for k in ("exit_code", "error", "stderr", "tool", "tool_name"))
+    return False
+
+
 def _infer_tool(tool_calls: str) -> str | None:
     try:
         parsed = json.loads(tool_calls)
@@ -176,7 +195,33 @@ def _infer_tool(tool_calls: str) -> str | None:
     if isinstance(parsed, list) and parsed:
         first = parsed[0]
         if isinstance(first, dict):
-            return first.get("function", {}).get("name") or first.get("name")
+            return (
+                first.get("function", {}).get("name")
+                or first.get("name")
+                or first.get("tool_name")
+                or first.get("tool")
+            )
+    if isinstance(parsed, dict):
+        explicit = (
+            parsed.get("tool_name")
+            or parsed.get("tool")
+            or parsed.get("name")
+            or parsed.get("function", {}).get("name")
+        )
+        if explicit:
+            return explicit
+        if "todos" in parsed:
+            return "todo"
+        if "session_id" in parsed and ("output" in parsed or "exit_code" in parsed):
+            return "process"
+        if "output" in parsed or "exit_code" in parsed or "stderr" in parsed:
+            return "terminal"
+        if "content" in parsed and "total_lines" in parsed:
+            return "read_file"
+        if "matches" in parsed or "files" in parsed:
+            return "search_files"
+        if "diff" in parsed or "files_modified" in parsed:
+            return "patch"
     return None
 
 
@@ -192,6 +237,7 @@ def run_scan(
     )
     days = int(days if days is not None else settings.get("window_days", 30))
     repeated_failure_threshold = int(settings.get("repeated_failure_threshold", 3))
+    failure_sample_limit = int(settings.get("failure_sample_limit", 50))
     dbs = discover_state_dbs(Path(base))
     profiles = [
         scan_database(db, days=days, repeated_failure_threshold=repeated_failure_threshold)
@@ -219,7 +265,7 @@ def run_scan(
         },
         "profiles": profiles,
         "corrections": corrections[:200],
-        "tool_failures": failures[:300],
+        "tool_failures": failures[:failure_sample_limit],
         "repeated_failures": [
             {"tool": t, "count": c}
             for t, c in repeated_by_tool.most_common()
@@ -229,6 +275,8 @@ def run_scan(
         "health": {
             "session_scanner": "sqlite state.db read-only scan",
             "degraded_profiles": [p for p in profiles if p.get("status") != "ok"],
+            "tool_failure_context": "failure patterns are counted only for tool-role/tool-name/tool-call/structured-tool-result messages",
+            "failure_sample_limit": failure_sample_limit,
         },
     }
     if vault:

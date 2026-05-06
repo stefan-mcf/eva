@@ -114,12 +114,64 @@ def discover_memory_files(base: str = PROFILES_GLOB) -> list[Path]:
 
 # ─── Scanners ────────────────────────────────────────────────────────────────
 
-def find_contradictions(memory_data: list[dict], contradiction_keywords: dict[tuple[str, str], str] | None = None) -> list[dict]:
+def _normalise_exception_rules(raw: list[dict[str, Any]] | None) -> list[dict[str, Any]]:
+    rules: list[dict[str, Any]] = []
+    for item in raw or []:
+        if not isinstance(item, dict):
+            continue
+        keywords = [str(k).lower() for k in item.get("keywords", [])]
+        phrases = [str(p).lower() for p in item.get("phrases", [])]
+        if len(keywords) >= 2 and phrases:
+            rules.append({"keywords": set(keywords), "phrases": phrases})
+    return rules
+
+
+def _contextual_not_conflict(
+    entry_a: dict[str, Any],
+    entry_b: dict[str, Any],
+    kw_a: str,
+    kw_b: str,
+    exception_rules: list[dict[str, Any]],
+) -> bool:
+    combined = f"{entry_a.get('text', '')} {entry_b.get('text', '')}".lower()
+    pair = {kw_a.lower(), kw_b.lower()}
+    for rule in exception_rules:
+        if pair == rule["keywords"] and any(phrase in combined for phrase in rule["phrases"]):
+            return True
+
+    # Built-in guardrails for entries that explicitly define two valid contexts
+    # rather than issuing incompatible instructions.
+    if pair == {"public", "private"}:
+        return any(
+            phrase in combined
+            for phrase in (
+                "private wip",
+                "public-facing",
+                "public release",
+                "private-to-public",
+                "two valid patterns",
+                "history-scrub",
+                "avoid `public` in names",
+                "avoid public in names",
+                "visible public attribution",
+            )
+        )
+    if pair == {"antaeus", "dead"}:
+        return any(phrase in combined for phrase in ("shelved", "dead", "phased out", "not active"))
+    return False
+
+
+def find_contradictions(
+    memory_data: list[dict],
+    contradiction_keywords: dict[tuple[str, str], str] | None = None,
+    context_exceptions: list[dict[str, Any]] | None = None,
+) -> list[dict]:
     """
     Find entries that semantically contradict each other using keyword
     pair heuristics. v0: keyword-based. Future: embedding similarity.
     """
     contradiction_keywords = contradiction_keywords or CONTRADICTION_KEYWORDS
+    exception_rules = _normalise_exception_rules(context_exceptions)
     findings = []
     all_entries = []
     for md in memory_data:
@@ -135,6 +187,8 @@ def find_contradictions(memory_data: list[dict], contradiction_keywords: dict[tu
                 if e_a["profile"] == e_b["profile"] and e_a["target"] == e_b["target"] and e_a["index"] == e_b["index"]:
                     continue
                 if e_a["profile"] == e_b["profile"] and e_a["target"] == e_b["target"]:
+                    if _contextual_not_conflict(e_a, e_b, kw_a, kw_b, exception_rules):
+                        continue
                     findings.append({
                         "reason": reason,
                         "keywords": (kw_a, kw_b),
@@ -154,7 +208,21 @@ def find_orphan_references(memory_data: list[dict], orphan_keywords: list[str] |
             for keyword in orphan_keywords:
                 if keyword.lower() in text_lower:
                     # Only flag if the entry ALSO doesn't acknowledge it's dead
-                    if "dead" in text_lower or "shelved" in text_lower or "phased out" in text_lower:
+                    if any(
+                        marker in text_lower
+                        for marker in (
+                            "dead",
+                            "shelved",
+                            "phased out",
+                            "legacy",
+                            "formerly",
+                            "free-standing",
+                            "current",
+                            "live",
+                            "not configured",
+                            "shared local skills",
+                        )
+                    ):
                         continue
                     findings.append({
                         "profile": md["profile"],
@@ -229,6 +297,7 @@ def run_scan(base: str = PROFILES_GLOB, vault: str | Path | None = None) -> dict
         if isinstance(item, list) and len(item) >= 3
     } or CONTRADICTION_KEYWORDS
     duplicate_threshold = float(settings.get("duplicate_similarity_threshold", 0.85))
+    context_exceptions = settings.get("contradiction_context_exceptions", [])
     files = discover_memory_files(base)
     memory_data = [parse_memory_file(f) for f in files]
 
@@ -244,7 +313,7 @@ def run_scan(base: str = PROFILES_GLOB, vault: str | Path | None = None) -> dict
             "total_entries": total_entries,
         },
         "memory_data": memory_data,
-        "contradictions": find_contradictions(memory_data, contradiction_keywords),
+        "contradictions": find_contradictions(memory_data, contradiction_keywords, context_exceptions),
         "orphan_references": find_orphan_references(memory_data, orphan_keywords),
         "duplicates": find_duplicate_content(memory_data, duplicate_threshold),
         "topics": get_topic_distribution(memory_data),
@@ -252,6 +321,7 @@ def run_scan(base: str = PROFILES_GLOB, vault: str | Path | None = None) -> dict
             "contradiction_scanner": "keyword-based heuristics only",
             "orphan_detection": f"settings keyword list ({len(orphan_keywords)} terms)",
             "duplicate_similarity_threshold": duplicate_threshold,
+            "contradiction_context_exception_rules": len(context_exceptions),
             "staleness_scanner": "disabled — filesystem mtime only, markdown has no per-entry timestamps",
         },
     }
