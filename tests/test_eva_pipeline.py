@@ -7,7 +7,7 @@ from pathlib import Path
 from eva.compilers.compile_brief import compile_brief
 from eva.loop import run_all
 from eva.proposers.propose_patches import generate_proposals, record_outcome, write_pending
-from eva.scanners import scan_configs, scan_memory, scan_sessions, scan_shyftr, scan_skills
+from eva.scanners import scan_configs, scan_memory, scan_memory_provider, scan_sessions, scan_skills
 
 
 def _write_state_db(profile: Path, messages: list[tuple[str, str, str | None, float]]) -> None:
@@ -104,7 +104,7 @@ def test_memory_scanner_uses_settings_threshold(tmp_path: Path) -> None:
     assert result["health"]["duplicate_similarity_threshold"] == 0.1
 
 
-def test_shyftr_scanner_reports_cell_diagnostics(tmp_path: Path) -> None:
+def test_memory_provider_scanner_reports_cell_diagnostics(tmp_path: Path) -> None:
     cell = tmp_path / "cell"
     (cell / "config").mkdir(parents=True)
     (cell / "ledger").mkdir(parents=True)
@@ -117,14 +117,14 @@ def test_shyftr_scanner_reports_cell_diagnostics(tmp_path: Path) -> None:
     )
     (cell / "charges" / "approved.jsonl").write_text(json.dumps({"trace_id": "trace-1"}) + "\n", encoding="utf-8")
 
-    result = scan_shyftr.run_scan(cell)
+    result = scan_memory_provider.run_scan(cell)
 
     assert result["summary"]["cell_id"] == "c"
     assert result["summary"]["approved_charges"] == 1
     assert result["summary"]["diagnostic_operations"] == {"pack": 1, "signal": 1}
     result["summary"]["profile_modes"] = {"antaeus-terminal-side": "runtime_primary"}
     brief = compile_brief(result)
-    assert "ShyftR" in brief
+    assert "Memory Provider" in brief
     assert "antaeus-terminal-side=runtime_primary" in brief
 
 

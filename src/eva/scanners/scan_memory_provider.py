@@ -1,4 +1,4 @@
-"""EVA ShyftR scanner — records ShyftR Cell and diagnostic-log health."""
+"""EVA memory-provider scanner — records local memory cell and diagnostic-log health."""
 from __future__ import annotations
 
 import json
@@ -12,8 +12,8 @@ from eva.common import HERMES_PROFILES_DIR
 
 DEFAULT_CELL = Path(
     os.environ.get(
-        "EVA_SHYFTR_CELL",
-        Path.home() / ".hermes" / "shyftr" / "cells" / "hermes-memory",
+        "EVA_MEMORY_CELL",
+        Path.home() / ".hermes" / "memory" / "cells" / "default",
     )
 ).expanduser()
 
@@ -66,7 +66,7 @@ def run_scan(cell: str | Path = DEFAULT_CELL, vault: str | Path | None = None) -
     bounded_primary_profiles: list[str] = []
     profiles_dir = HERMES_PROFILES_DIR
     if profiles_dir.exists():
-        for cfg in profiles_dir.glob("*/shyftr.json"):
+        for cfg in profiles_dir.glob("*/memory-provider.json"):
             try:
                 data = json.loads(cfg.read_text(encoding="utf-8"))
                 if Path(str(data.get("cell_path", ""))).expanduser() == cell_path:
@@ -92,12 +92,12 @@ def run_scan(cell: str | Path = DEFAULT_CELL, vault: str | Path | None = None) -
         "diagnostic_statuses": dict(sorted(statuses.items())),
     }
     return {
-        "scanner": "shyftr",
+        "scanner": "memory_provider",
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "summary": summary,
         "recent_diagnostics": recent,
         "health": {
-            "canonical_truth": "ShyftR Cell append-only ledgers",
+            "canonical_truth": "Memory-provider append-only ledgers",
             "diagnostics_role": "diagnostics explain decisions; they are not canonical memory truth",
             "replacement_boundary": "advisory/bounded pilot only unless operator approves expansion",
         },
@@ -107,7 +107,7 @@ def run_scan(cell: str | Path = DEFAULT_CELL, vault: str | Path | None = None) -
 def main() -> None:
     import argparse
 
-    parser = argparse.ArgumentParser(description="Scan ShyftR Cell diagnostics for EVA")
+    parser = argparse.ArgumentParser(description="Scan memory-provider diagnostics for EVA")
     parser.add_argument("--cell", default=str(DEFAULT_CELL))
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args()

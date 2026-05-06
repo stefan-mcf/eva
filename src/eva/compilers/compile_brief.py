@@ -85,8 +85,8 @@ def _section_configs(scan: dict[str, Any]) -> list[str]:
     return lines
 
 
-def _section_shyftr(scan: dict[str, Any]) -> list[str]:
-    lines = ["### ShyftR"]
+def _section_memory_provider(scan: dict[str, Any]) -> list[str]:
+    lines = ["### Memory Provider"]
     summary = scan.get("summary", {})
     lines.append(f"Cell: `{summary.get('cell')}` — exists: {summary.get('exists')}")
     lines.append(
@@ -99,7 +99,7 @@ def _section_shyftr(scan: dict[str, Any]) -> list[str]:
     )
     profiles = summary.get("configured_profiles", [])
     if profiles:
-        lines.append(f"- Hermes profiles configured for ShyftR: {', '.join(profiles)}")
+        lines.append(f"- Hermes profiles configured for this memory provider: {', '.join(profiles)}")
     modes = summary.get("profile_modes") or {}
     if modes:
         lines.append("- Authority modes: " + ", ".join(f"{name}={mode}" for name, mode in sorted(modes.items())))
@@ -147,7 +147,7 @@ def compile_brief(scan_results: dict[str, Any]) -> str:
             ("sessions", _section_sessions),
             ("skills", _section_skills),
             ("configs", _section_configs),
-            ("shyftr", _section_shyftr),
+            ("memory_provider", _section_memory_provider),
             ("operator_profile", _section_profile),
             ("proposal_summary", _section_proposals),
         ]
@@ -163,8 +163,8 @@ def compile_brief(scan_results: dict[str, Any]) -> str:
         lines.extend(_section_skills(scan_results))
     elif scanner == "configs":
         lines.extend(_section_configs(scan_results))
-    elif scanner == "shyftr":
-        lines.extend(_section_shyftr(scan_results))
+    elif scanner == "memory_provider":
+        lines.extend(_section_memory_provider(scan_results))
     else:
         summary = scan_results.get("summary", {})
         lines.append(f"Summary: `{json.dumps(summary)[:800]}`")

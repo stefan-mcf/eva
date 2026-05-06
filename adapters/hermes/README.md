@@ -19,6 +19,9 @@ These files are public templates for running EVA against Hermes profile stores. 
 
 2. Create a local EVA vault outside this repository.
 3. Create a Hermes profile using `SOUL.md` as a starting point.
+   Do not pin a public template to a specific memory provider. Let the
+   deployment's Hermes profile inherit or use the operator's configured default
+   memory backend, unless the operator explicitly chooses a local override.
 4. Run with explicit paths:
 
    ```bash
@@ -40,6 +43,8 @@ EVA itself does not require an open terminal when scheduled, and EVA core does n
 ## Do not commit
 
 - Local profile configs.
+- Provider-specific memory overrides, unless they are clearly marked as local
+  deployment state.
 - Credentials.
 - Generated vault artifacts.
 - Scheduler IDs.

@@ -30,9 +30,13 @@ The adapter does not include live local profile state, secrets, chat identifiers
 
    See [docs/skills.md](skills.md) for skill doctrine, profile-specific install paths, and maintenance rules.
 4. Configure the profile with local tools needed to run `eva-loop` and read profile files.
-5. Set explicit paths when the profile-local home differs from the normal shell home.
-6. Schedule `eva-loop` with `--profiles-dir` and `--vault`.
-7. Configure any notification delivery in the scheduler or Hermes cron job, not in EVA core.
+5. Do not hardcode the public adapter to any named memory provider. Omit
+   `memory.provider` in public templates unless the local
+   operator explicitly wants an override; an installed EVA profile should adopt
+   the operator's normal Hermes memory backend/default for that environment.
+6. Set explicit paths when the profile-local home differs from the normal shell home.
+7. Schedule `eva-loop` with `--profiles-dir` and `--vault`.
+8. Configure any notification delivery in the scheduler or Hermes cron job, not in EVA core.
 
 Example command:
 
@@ -61,6 +65,7 @@ Committed:
 Not committed:
 
 - live profile config files;
+- provider-specific memory overrides;
 - credentials;
 - generated vault artifacts;
 - local scheduler IDs;

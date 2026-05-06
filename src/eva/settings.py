@@ -21,7 +21,7 @@ DEFAULT_SETTINGS: dict[str, Any] = {
             ["antaeus", "dead", "Project lifecycle contradiction"],
             ["lab", "no lab", "Naming convention contradiction"],
         ],
-        "orphan_keywords": ["antaeus", "antaeus-terminal", "antaeus-terminal-side", "courier", "shyftr"],
+        "orphan_keywords": ["antaeus", "antaeus-terminal", "antaeus-terminal-side", "courier"],
         "duplicate_similarity_threshold": 0.85,
         "contradiction_context_exceptions": [
             {

@@ -38,7 +38,6 @@ ORPHAN_KEYWORDS = [
     "antaeus-terminal",
     "antaeus-terminal-side",
     "courier",
-    "shyftr",
 ]
 
 PROFILES_GLOB = str(HERMES_PROFILES_DIR)
