@@ -11,8 +11,9 @@ The adapter covers:
 - skill directories;
 - profile configuration files;
 - a template `SOUL.md` for an EVA profile;
-- a template `PROFILE.md` capability spec; and
-- a template `settings.json` for the EVA vault.
+- a template `PROFILE.md` capability spec;
+- a template `settings.json` for the EVA vault; and
+- a reusable EVA skill at `adapters/hermes/skills/eva/SKILL.md`.
 
 The adapter does not include live local profile state, secrets, chat identifiers, or generated vault artifacts.
 
@@ -20,9 +21,17 @@ The adapter does not include live local profile state, secrets, chat identifiers
 
 1. Create a dedicated Hermes profile for EVA.
 2. Copy or adapt `adapters/hermes/SOUL.md` into that profile's instruction file.
-3. Configure the profile with local tools needed to run `eva-loop` and read profile files.
-4. Set explicit paths when the profile-local home differs from the normal shell home.
-5. Schedule `eva-loop` with `--profiles-dir` and `--vault`.
+3. Install or attach the EVA skill if a Hermes agent will operate EVA:
+
+   ```bash
+   mkdir -p "$HOME/.hermes/skills/eva"
+   cp adapters/hermes/skills/eva/SKILL.md "$HOME/.hermes/skills/eva/SKILL.md"
+   ```
+
+   See [docs/skills.md](skills.md) for skill doctrine, profile-specific install paths, and maintenance rules.
+4. Configure the profile with local tools needed to run `eva-loop` and read profile files.
+5. Set explicit paths when the profile-local home differs from the normal shell home.
+6. Schedule `eva-loop` with `--profiles-dir` and `--vault`.
 
 Example command:
 
@@ -43,6 +52,7 @@ Committed:
 - `adapters/hermes/SOUL.md`
 - `adapters/hermes/PROFILE.md`
 - `adapters/hermes/settings.template.json`
+- `adapters/hermes/skills/eva/SKILL.md`
 - `adapters/hermes/README.md`
 
 Not committed:
@@ -61,3 +71,7 @@ If a profile store, database, or settings file cannot be read, EVA should report
 ## Adapter boundary
 
 Hermes is an adapter, not EVA's entire identity. The core project should remain understandable to users of other agent runtimes.
+
+## Skill doctrine
+
+The EVA skill is committed in full at `adapters/hermes/skills/eva/SKILL.md` so users can inspect it before enabling it. It is not live profile state and is not automatically copied into a user's Hermes home by Python package installation. See [docs/skills.md](skills.md) for install commands, copy-vs-canonical-source guidance, and maintenance rules.

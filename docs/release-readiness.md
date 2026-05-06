@@ -50,6 +50,7 @@ python3 -m piplicenses --format=markdown --with-urls
 - Public docs use generic operator/runtime language.
 - Local absolute paths are absent from public-facing files.
 - Historical docs are clearly marked.
+- The project-bundled Hermes skill remains at `adapters/hermes/skills/eva/SKILL.md`, is documented in `docs/skills.md`, and is not duplicated into docs as a second full copy.
 
 ## GitHub checks
 

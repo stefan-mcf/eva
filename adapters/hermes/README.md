@@ -7,6 +7,7 @@ These files are public templates for running EVA against Hermes profile stores. 
 - `SOUL.md` — template instructions for an EVA Hermes profile.
 - `PROFILE.md` — example profile capability spec.
 - `settings.template.json` — generic vault settings template.
+- `skills/eva/SKILL.md` — project-bundled Hermes skill for repeatable dry-run-first EVA operation and testing; see `../../docs/skills.md` for install doctrine.
 
 ## Basic setup
 
@@ -24,7 +25,14 @@ These files are public templates for running EVA against Hermes profile stores. 
    eva-loop --profiles-dir /path/to/hermes/profiles --vault /path/to/eva-vault
    ```
 
-5. Schedule the command only after confirming `eva-loop --no-write --json` behaves as expected.
+5. If a Hermes agent will operate EVA, install or attach `skills/eva/SKILL.md` after inspecting it:
+
+   ```bash
+   mkdir -p "$HOME/.hermes/skills/eva"
+   cp adapters/hermes/skills/eva/SKILL.md "$HOME/.hermes/skills/eva/SKILL.md"
+   ```
+
+6. Schedule the command only after confirming `eva-loop --no-write --json` behaves as expected.
 
 ## Do not commit
 

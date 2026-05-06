@@ -73,10 +73,25 @@ See [docs/architecture.md](docs/architecture.md) for the conceptual architecture
 
 ## Quickstart
 
+For a clean external test, use a virtual environment and install the development extras so local verification commands are available:
+
 ```bash
 git clone https://github.com/stefan-mcf/eva.git
 cd eva
-python3 -m pip install -e .
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -e '.[dev]'
+```
+
+Run the local readiness gate:
+
+```bash
+python -m ruff check .
+python -m pytest -q
+python -m compileall -q src tests
+python scripts/public_readiness_check.py
+git diff --check
 ```
 
 Run a strict dry-run. This prints JSON and does not create or modify a vault:
@@ -123,6 +138,14 @@ Installed console scripts:
 - `eva-propose-patches` — proposal generator.
 
 See [docs/cli.md](docs/cli.md) for command inputs, outputs, read/write behavior, and examples.
+
+## Tester guide
+
+For external testers, use [docs/testing-quickstart.md](docs/testing-quickstart.md). It covers clean clone setup, local verification gates, no-write smoke tests, synthetic examples, real Hermes profile scans with explicit paths, and artifact review before sharing results.
+
+## Hermes skill
+
+EVA includes a project-bundled Hermes skill at [adapters/hermes/skills/eva/SKILL.md](adapters/hermes/skills/eva/SKILL.md). The full skill is committed as plain Markdown so operators can inspect it before installing it into Hermes. See [docs/skills.md](docs/skills.md) for skill doctrine, install/copy commands, and maintenance rules.
 
 ## Configuration
 
