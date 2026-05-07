@@ -32,6 +32,7 @@ def ensure_vault(vault: Path = EVA_VAULT_DIR) -> Path:
         "repairs/approved",
         "repairs/applied",
         "repairs/failed",
+        "repairs/generated",
         "repairs/ledger",
         "review-packets",
         "briefs",

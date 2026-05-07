@@ -14,10 +14,14 @@ def draft_repair_bundle(proposal: dict[str, Any], scan_bundle: dict[str, Any] | 
     policy = classify_repair_policy(proposal)
     pid = str(proposal.get("id", "proposal"))
     actions = draft_actions_for_proposal(proposal)
-    target_rel = f"review-packets/{utc_now()[:10]}/{pid}-repair-review.md"
+    review_packet_rel = f"review-packets/{utc_now()[:10]}/{pid}-repair-review.md"
+    generated_artifact_rel = f"repairs/generated/{utc_now()[:10]}/{pid}-artifact.md"
     if policy["target_class"] in {"eva_review_packet", "unknown"}:
         for action in actions:
-            action.setdefault("target_path", target_rel)
+            action.setdefault("target_path", review_packet_rel)
+    if policy["target_class"] == "eva_generated_artifact":
+        for action in actions:
+            action.setdefault("target_path", generated_artifact_rel)
     return {
         "schema": REPAIR_BUNDLE_SCHEMA,
         "id": f"{pid}-repair",

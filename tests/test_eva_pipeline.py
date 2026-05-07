@@ -203,6 +203,23 @@ def test_loop_no_write_does_not_create_or_modify_files(tmp_path: Path) -> None:
     assert not vault.exists()
 
 
+def test_session_scanner_read_only_connection_does_not_create_sqlite_sidecars(tmp_path: Path) -> None:
+    profile = tmp_path / "p1"
+    _write_state_db(profile, [("tool", "Traceback error", "terminal", 2000000001)])
+    db = profile / "state.db"
+    con = sqlite3.connect(db)
+    con.execute("PRAGMA journal_mode=WAL")
+    con.close()
+    for suffix in ("-wal", "-shm"):
+        db.with_name(db.name + suffix).unlink(missing_ok=True)
+
+    result = scan_sessions.run_scan(tmp_path, days=99999)
+
+    assert result["summary"]["tool_failures_found"] == 1
+    assert not db.with_name(db.name + "-wal").exists()
+    assert not db.with_name(db.name + "-shm").exists()
+
+
 
 def test_memory_scanner_suppresses_contextual_public_private_false_positive(tmp_path: Path) -> None:
     memories = tmp_path / "profiles" / "p1" / "memories"

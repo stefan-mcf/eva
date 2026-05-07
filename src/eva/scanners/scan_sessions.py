@@ -51,7 +51,9 @@ FAILURE_PATTERNS = [
 
 
 def _connect_ro(db: Path) -> sqlite3.Connection:
-    return sqlite3.connect(f"file:{db}?mode=ro", uri=True)
+    # immutable=1 prevents SQLite from creating -wal/-shm sidecar files while
+    # EVA is scanning live Hermes profile state as a read-only evidence source.
+    return sqlite3.connect(f"file:{db}?mode=ro&immutable=1", uri=True)
 
 
 def _iso(ts: float | int | None) -> str | None:
