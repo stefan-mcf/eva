@@ -35,7 +35,8 @@ EVA currently provides a Hermes adapter that can:
 - compile a concise operator brief;
 - generate a checklisted remediation plan plus scheduler-friendly notification summary;
 - draft repair bundles and operator ledgers from approved/pending proposals;
-- safely apply only deterministic EVA-owned generated-artifact repairs; and
+- safely apply only deterministic EVA-owned generated artifacts, review packets,
+  and evidence-keyed proposal-state bookkeeping; and
 - run the full loop from a CLI command or scheduler.
 
 ## What EVA does not do

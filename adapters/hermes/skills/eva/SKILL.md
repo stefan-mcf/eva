@@ -1,7 +1,7 @@
 ---
 name: eva
 description: Use when operating, configuring, testing, reviewing, or documenting EVA from Hermes, including EVA MCP tools, vault artifacts, remediation plans, memory-provider boundaries, scheduler behavior, degraded scans, and public/private release checks.
-version: 2.1.0
+version: 2.2.0
 author: EVA maintainers
 license: MIT
 tags: [eva, hermes-adapter, mcp, evidence-review, remediation, safety]
@@ -30,7 +30,7 @@ Operator      = approval for human-gated changes
 Core rule:
 
 ```text
-inspect setup -> dry-run first -> explicit paths -> vault-only writes -> review artifacts -> report evidence, limits, next steps
+inspect setup -> dry-run first -> explicit paths -> vault-only writes -> safe auto-repair -> concise run report -> recommended residual plan
 ```
 
 ## When to Use
@@ -70,11 +70,16 @@ Notification rule: EVA does not require an open terminal when invoked by Hermes 
 5. Label empty/degraded/noisy/unsafe results accurately.
 6. Review vault artifacts before sharing; assume they may contain private operational data.
 7. Treat proposals and remediation plans as checklists, not applied changes.
-8. Auto-apply only deterministic EVA-owned generated artifacts when policy/tooling explicitly permits it.
+8. Auto-apply only deterministic EVA-owned targets when policy/tooling explicitly permits it:
+   - `eva_generated_artifact`: review packets, remediation-plan artifacts, notification summaries, repair ledgers, closeout reports.
+   - `eva_review_packet`: tool-failure triage, session-correction review, session-skill-patch review, skill-duplicate review, skill-stale review.
+   - `eva_proposal_state`: only deterministic evidence-keyed bookkeeping (`superseded`, `rejected`, `applied`) with exact replacement/false-positive/verification-artifact evidence.
 9. Human-gate memory, skill, profile config, operator profile, scheduler, credential, delivery, public-repo, and unknown targets.
 10. Public docs/examples use generic paths and synthetic data only.
 
 ## Execution Workflow
+
+For a full operator-checkable run after repair-policy work, use the detailed runbook in `references/live-eva-run-with-repair-closeout.md`.
 
 ### 1. Inspect setup
 
@@ -163,6 +168,16 @@ repairs/*
 review-packets/*
 ```
 
+After `eva-repair closeout --write`, expect a concise user-facing run report and a post-repair residual operator plan in addition to the original scan remediation plan:
+
+```text
+repairs/ledger/latest-run-report.{json,md}
+repairs/ledger/latest-closeout.{json,md}
+repairs/ledger/latest-residual-plan.{json,md}
+```
+
+The run report is the default thing to show the user. It should say only what EVA found, what EVA fixed/applied, the recommended remediation plan path, remaining human-gated categories, and short status. The residual plan should list anything not safely auto-applied, especially human-gated memory, skill, config, operator-profile, scheduler, credential, delivery, public-repo, or unknown targets.
+
 ### 6. Source-mutation guard
 
 If the profile source is a git checkout:
@@ -192,6 +207,19 @@ Unexpected source mutation is a blocker: stop, preserve evidence, and do not con
 
 Target-class policy: deterministic EVA-owned generated artifacts may be auto-applied only when policy/tooling allows. Hermes memory, Hermes skill, Hermes profile config, operator profile, scheduler, credential, delivery destination, public repo, and unknown targets are human-gated.
 
+### Residual-plan closeout triage
+
+When asked to "fully implement" an EVA residual action plan, inspect the residual plan JSON/Markdown plus the closeout/ledger before mutating anything. If all remaining items have `auto_apply_allowed: false` or `requires_human_gate: true`, stop for operator review even if the user requested autonomous progress. First verify that every auto-applicable draft already has both an applied outcome JSON and any expected review-packet Markdown; if not, finish only those EVA-owned artifacts.
+
+Default recommendations for human-gated residual classes:
+
+- `hermes_profile_config` / config alignment: usually **defer** unless the operator explicitly approves a specific profile-by-profile patch. Cross-profile drift is often intentional model/provider/lane separation.
+- `hermes_memory` cleanup: approve only **per-entry review/triage**, not bulk mutation. Produce keep/remove/rewrite recommendations with evidence.
+- `hermes_memory` merge/contradiction: reject or defer when false-positive risk is high; apparent public/private or old/new contradictions may both be true in context.
+- `operator_profile`: defer broad promotion; curate stable high-confidence items manually.
+- `hermes_skill` rewrite: defer broad rewrites, especially when confidence is low or evidence is sampled. Treat as separate skill-smith work one class-level skill at a time.
+- `hermes_skill` tool-failure runbook: approve only failure-mode triage/review artifacts until raw counts are grouped into concrete repeated causes; high-volume generic tool failures (`terminal`, `read_file`, `unknown`) are not enough to create useful runbooks.
+
 ## Public Repo Documentation Rules
 
 - Canonical skill path: `adapters/hermes/skills/eva/SKILL.md`.
@@ -203,8 +231,21 @@ Target-class policy: deterministic EVA-owned generated artifacts may be auto-app
 
 ## Report Template
 
+Default user-facing EVA run reports must be clean and concise. After a scan/repair run, report only:
+
 ```text
-EVA report
+EVA run complete
+Found: <short counts / categories>
+Fixed: <safe auto-applied review packets or generated artifacts>
+Plan: <recommended remediation plan path>
+Remaining: <human-gated residual categories>
+Status: <validation/source-mutation/privacy summary>
+```
+
+Use the detailed diagnostic form only when debugging, publishing readiness, or explicitly asked for artifact inventories/commands/logs:
+
+```text
+EVA diagnostic report
 repo: <path>, commit <short-sha>, status <clean/dirty summary>
 mode: <mcp/cli>, write: <false/true>, profiles_dir: <path/omitted>, vault: <path/omitted>
 verification: ruff <pass/fail/not-run>; pytest <pass/fail/not-run>; compileall <pass/fail/not-run>; readiness <pass/fail/not-run>
@@ -229,7 +270,7 @@ next steps: <manual review/rerun/fix scanner/safe to share>
 8. Assuming EVA writes Hermes memory; EVA writes vault artifacts.
 9. Hardcoding ShyftR/Mem0/built-in memory in public templates.
 10. Treating a remediation plan as approval to apply changes.
-11. Ignoring source mutation checks for real profile scans.
+11. Source mutation checks should treat SQLite `state.db-wal`/`state.db-shm` sidecars as mutation signals during live profile scans. EVA session scanning should use immutable read-only SQLite connections (`file:<db>?mode=ro&immutable=1`) so read-only evidence gathering does not create WAL/SHM files in profile directories.
 12. Leaving generated build/cache artifacts in public-facing diffs.
 
 ## Verification Checklist
@@ -244,4 +285,4 @@ next steps: <manual review/rerun/fix scanner/safe to share>
 - [ ] Empty/degraded/noisy/unsafe/actionable results labeled correctly.
 - [ ] Source runtime/profile files not unexpectedly modified.
 - [ ] Memory-provider, scheduler, notification, and public/private boundaries preserved.
-- [ ] Final report includes commands/tool calls, artifacts, limits, and next steps.
+- [ ] Final user-facing report is concise: found, fixed, recommended plan, remaining, status. Diagnostic artifact inventories/commands are included only when requested.

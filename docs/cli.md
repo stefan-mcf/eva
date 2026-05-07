@@ -182,13 +182,14 @@ Inputs:
 - `draft-all` — draft all pending proposal bundles and optionally write a ledger.
 - `list` / `inspect` — review proposal state.
 - `approve`, `reject`, `defer` — record operator proposal outcomes with `--note`.
-- `apply BUNDLE_ID` — apply only policy-allowed EVA-owned generated-artifact actions.
+- `apply BUNDLE_ID` — apply only policy-allowed EVA-owned generated-artifact,
+  review-packet, and deterministic proposal-state actions.
 - `verify OUTCOME_ID` — verify an apply outcome.
 - `ledger` / `closeout` — render operator inbox and closeout artifacts.
 
 Outputs: JSON or Markdown on stdout. With `--write`, writes only under `repairs/` and `review-packets/` in the selected vault, except proposal outcome commands which move proposal JSON between proposal state directories.
 
-Read/write behavior: drafting, ledgers, review packets, and closeout reports are vault-local. Auto-apply is restricted to deterministic EVA-owned generated artifacts and review packets. Human-gated target classes remain blocked until a separate approved workflow handles them.
+Read/write behavior: drafting, ledgers, review packets, and closeout reports are vault-local. Auto-apply is restricted to deterministic EVA-owned generated artifacts, review packets, and evidence-keyed proposal-state bookkeeping. Human-gated target classes remain blocked until a separate approved workflow handles them.
 
 Examples:
 

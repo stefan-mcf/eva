@@ -121,7 +121,7 @@ hermes --skills eva
 Within Hermes, the skill's core operating rule is:
 
 ```text
-verify checkout → dry-run first → explicit paths → vault-only writes → artifact review → report evidence, limits, next steps
+inspect setup → dry-run first → explicit paths → vault-only writes → safe auto-repair → concise run report → recommended residual plan
 ```
 
 ## Maintenance rules

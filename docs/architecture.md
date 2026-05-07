@@ -21,7 +21,7 @@ EVA is an evidence and verification layer for agent runtimes. It converts durabl
 ## Design principles
 
 - **proposal-first:** EVA drafts proposals before any repair artifact exists.
-- **human-gated repair:** EVA-Repair may draft bundles and apply only deterministic EVA-owned generated artifacts; live runtime mutations remain human-gated.
+- **human-gated repair:** EVA-Repair may draft bundles and apply only deterministic EVA-owned generated artifacts, review packets, and evidence-keyed proposal-state bookkeeping; live runtime mutations remain human-gated.
 - **read-mostly:** source profile stores are scanned, not mutated.
 - **evidence-backed:** proposals should cite durable observations and avoid one-off conclusions.
 - **adapter-separated:** runtime-specific concerns live behind adapter docs and templates.

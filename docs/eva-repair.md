@@ -11,7 +11,8 @@ scan -> propose -> plan -> repair draft -> operator ledger -> safe apply -> veri
 - `eva-repair draft` and `eva-repair draft-all` convert proposal JSON into repair bundle JSON.
 - `eva-repair ledger` renders a single operator-visible repair ledger/inbox.
 - `eva-repair apply` applies only safe, deterministic EVA-owned artifact actions.
-- `eva-repair closeout` records repair outcomes and unresolved human-gated work.
+- `eva-repair closeout` records repair outcomes, concise run-report artifacts,
+  and unresolved human-gated work.
 
 ## Safety doctrine
 
@@ -135,7 +136,9 @@ Closeout should include:
 - drafted/applied/blocked repair counts;
 - unresolved human-gated bundle counts;
 - before/after scan timestamps when supplied;
-- paths to generated ledgers/outcomes/review packets.
+- paths to generated ledgers/outcomes/review packets;
+- `latest-run-report.{json,md}` for concise operator-facing reporting; and
+- `latest-residual-plan.{json,md}` for post-repair human-gated next actions.
 
 ## Suppression doctrine
 
