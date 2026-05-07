@@ -6,7 +6,7 @@ EVA is an evidence and verification layer for agent runtimes. It converts durabl
 
 - Make agent-system operations inspectable from durable records.
 - Keep the core package portable and independent of one runtime.
-- Preserve a proposal-only safety boundary.
+- Preserve a proposal-first, human-gated safety boundary.
 - Use repeatable local checks instead of implicit trust in live deployments.
 - Produce artifacts that can be reviewed, archived, diffed, and tested.
 
@@ -20,7 +20,8 @@ EVA is an evidence and verification layer for agent runtimes. It converts durabl
 
 ## Design principles
 
-- **proposal-only:** EVA drafts proposals; it does not apply them.
+- **proposal-first:** EVA drafts proposals before any repair artifact exists.
+- **human-gated repair:** EVA-Repair may draft bundles and apply only deterministic EVA-owned generated artifacts; live runtime mutations remain human-gated.
 - **read-mostly:** source profile stores are scanned, not mutated.
 - **evidence-backed:** proposals should cite durable observations and avoid one-off conclusions.
 - **adapter-separated:** runtime-specific concerns live behind adapter docs and templates.
@@ -37,7 +38,9 @@ Evidence Sources
   → Proposal Engine
   → Brief Compiler
   → Remediation Plan Compiler
-  → Operator Review
+  → EVA-Repair Drafts / Ledger
+  → Safe Apply / Verify / Closeout
+  → Operator Review for human-gated targets
 ```
 
 ### Component view
@@ -50,18 +53,22 @@ graph LR
   D --> E[Proposal Engine]
   E --> F[Brief Compiler]
   F --> H[Remediation Plan Compiler]
-  H --> G[Operator Review]
+  H --> I[EVA-Repair Drafts / Ledger]
+  I --> J[Safe EVA-owned Apply / Verify / Closeout]
+  I --> G[Operator Review]
+  J --> G
 ```
 
-Evidence sources are durable files or databases from an agent runtime. Scanners normalize those sources into JSON-like summaries. The compiler turns the combined evidence into an operator profile. The proposal engine creates pending recommendations. The brief compiler creates a human-readable summary. The remediation-plan compiler turns findings and proposals into ordered, checklisted operator tranches.
+Evidence sources are durable files or databases from an agent runtime. Scanners normalize those sources into JSON-like summaries. The compiler turns the combined evidence into an operator profile. The proposal engine creates pending recommendations. The brief compiler creates a human-readable summary. The remediation-plan compiler turns findings and proposals into ordered, checklisted operator tranches. EVA-Repair can then draft repair bundles and ledgers from proposals while preserving target-class policy gates.
 
 ## Runtime/data-flow architecture
 
 ```text
 Agent Runtime Profile Stores
   → eva.loop
-  → eva-vault/{evidence,context,proposals,briefs,health}
-  → scheduled/manual delivery
+  → eva-vault/{evidence,context,proposals,briefs,plans,health}
+  → eva-repair {drafts,ledger,review-packets,closeout}
+  → scheduled/manual delivery or operator review
 ```
 
 ### Runtime flow view
@@ -92,7 +99,10 @@ In write mode, `eva-loop` creates or updates vault artifacts. In strict dry-run 
 - `eva.compilers.compile_profile` — operator profile compilation from combined evidence.
 - `eva.compilers.compile_brief` — concise human brief compilation.
 - `eva.compilers.compile_remediation_plan` — checklisted remediation plan and notification-summary compilation.
-- `eva.proposers.propose_patches` — pending proposal generation.
+- `eva.proposals` — proposal lifecycle states and dedupe helpers.
+- `eva.validators` — scan completeness and proposal actionability validators.
+- `eva.proposers.propose_patches` — pending proposal generation and outcome recording.
+- `eva.repair.*` — repair schemas, policies, drafters, IO, ledgers, guarded apply, verification, closeout, and CLI.
 - `eva.loop` — end-to-end orchestration and CLI entrypoint.
 
 ## Data contracts
@@ -117,11 +127,11 @@ The operator profile is a JSON-compatible dictionary containing generated timest
 
 ### Proposal schema overview
 
-Pending proposals are JSON-compatible records that include an identifier, title, rationale, confidence or priority where available, evidence references where available, and a manual review disposition. A proposal is not an action.
+Pending proposals are JSON-compatible records that include an identifier, title, rationale, confidence or priority where available, evidence references where available, lifecycle status, safety metadata, and a manual review disposition. A proposal is not an action. Outcome recording moves proposals through pending, approved, deferred, rejected, applied, and superseded states.
 
 ### Remediation plan schema overview
 
-Remediation plans use schema `eva-remediation-plan/v1`. They include finding counts, artifact pointers, ordered tranches, approval gates, an operator inbox, and safety flags. A remediation plan is a checklist, not an action. See `docs/remediation-plans.md`.
+Remediation plans use schema `eva-remediation-plan/v1`. They include finding counts, validator output, repair artifact pointers, ordered tranches, approval gates, an operator inbox, and safety flags. A remediation plan is a checklist, not an action. See `docs/remediation-plans.md`.
 
 ### Vault layout
 
@@ -137,8 +147,11 @@ eva-vault/
     successes.jsonl
   proposals/
     pending/
-    applied/
+    approved/
+    deferred/
     rejected/
+    applied/
+    superseded/
   briefs/
     latest-scan.json
     latest-brief.md
@@ -147,9 +160,16 @@ eva-vault/
     latest-plan.md
   health/
     latest-notification.txt
+  repairs/
+    drafts/
+    approved/
+    applied/
+    failed/
+    ledger/
+  review-packets/
 ```
 
-The vault is generated runtime state. It should normally be outside the source repository.
+The vault is generated runtime state. It should normally be outside the source repository. Repair artifacts in the vault are reviewable artifacts and do not imply approval to mutate live runtime state.
 
 ## Adapter boundary
 

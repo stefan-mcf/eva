@@ -16,14 +16,23 @@ The `eva` skill teaches a Hermes agent how to operate, test, and review EVA safe
 - repository readiness gates;
 - dry-run-first `eva-loop --no-write --json` checks;
 - explicit `--profiles-dir` and `--vault` paths;
+- when to use EVA MCP tools versus the CLI;
 - keeping source runtime/profile directories read-only;
 - writing generated output only to an EVA vault;
 - source-mutation guards for real profile scans;
 - generated artifact review before sharing;
-- degraded, empty, noisy, and unsafe result classification; and
+- degraded, empty, noisy, and unsafe result classification;
+- scheduler/notification ownership;
+- memory-provider boundaries; and
 - concise tester/operator reports.
 
-It does not authorize EVA or Hermes to auto-apply memory, skill, config, source-code, profile, credential, scheduler, or delivery-destination changes.
+It does not authorize EVA or Hermes to auto-apply memory, skill, config, source-code, profile, credential, scheduler, delivery-destination, public-repository, or unknown-target changes.
+
+## MCP versus skill boundary
+
+The EVA MCP bridge is the tool surface: it lets Hermes call bounded operations such as `eva_scan_health` and `eva_compile_remediation`. The skill is the doctrine layer: it tells Hermes when to call those tools, when to keep `write=false`, how to interpret empty/degraded/noisy results, which artifacts require review, and which target classes remain human-gated.
+
+Use MCP alone for a narrow capability check. Load/use the skill whenever the work involves operator judgment, remediation planning, scheduler behavior, memory-provider interpretation, public-facing docs, or generated artifact review.
 
 ## Skill installation doctrine
 

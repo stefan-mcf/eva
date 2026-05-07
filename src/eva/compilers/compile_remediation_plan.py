@@ -8,13 +8,16 @@ from pathlib import Path
 from typing import Any
 
 from eva.common import EVA_VAULT_DIR, atomic_write_json, atomic_write_text, read_json, utc_now
+from eva.repair.schemas import ALWAYS_HUMAN_GATED_TARGET_CLASSES, SAFE_AUTO_APPLY_TARGET_CLASSES
+from eva.settings import load_settings
+from eva.validators import validate_proposal_actionability, validate_scan_completeness
 
 PLAN_SCHEMA = "eva-remediation-plan/v1"
 
 
 PROPOSAL_KINDS_BY_TRANCHE = {
-    "TR-2": {"skill_restructure", "skill_rewrite"},
-    "TR-3": {"tool_failure_runbook"},
+    "TR-2": {"skill_restructure", "skill_rewrite", "skill_duplicate_review", "skill_stale_review", "session_skill_patch_review"},
+    "TR-3": {"tool_failure_runbook", "tool_failure_triage", "session_correction_review"},
     "TR-4": {"memory_merge", "memory_cleanup"},
     "TR-5": {"config_alignment"},
     "TR-6": {"operator_profile_review"},
@@ -43,7 +46,9 @@ def _finding_counts(scan_bundle: dict[str, Any]) -> dict[str, int]:
         "memory_contradictions": _len(memory.get("contradictions")),
         "memory_orphan_references": _len(memory.get("orphan_references")),
         "memory_duplicates": _len(memory.get("duplicates")),
+        "session_corrections": int(session_summary.get("corrections_found", 0) or 0),
         "session_repeated_failures": _len(sessions.get("repeated_failures")),
+        "session_skill_patches": int(session_summary.get("skill_patches_found", 0) or 0),
         "session_tool_failures": int(session_summary.get("tool_failures_found", 0) or 0),
         "skill_oversized": _len(skills.get("oversized_skills")),
         "skill_high_patch_frequency": _len(skills.get("high_patch_frequency")),
@@ -116,7 +121,12 @@ def compile_remediation_plan(
     proposals = _proposal_list(scan_bundle)
     total_findings = sum(counts.values())
     degraded = _has_degraded_markers(scan_bundle)
+    settings = load_settings(vault_path) if vault_path is not None else {}
+    scan_validation = validate_scan_completeness(scan_bundle, expected_vault=str(vault_path) if vault_path else None)
+    actionability_validation = validate_proposal_actionability(scan_bundle, settings)
     status = "degraded" if degraded else "ok" if total_findings or proposals else "empty"
+    if scan_validation.get("status") == "failed" or actionability_validation.get("status") == "failed":
+        status = "blocked" if actionability_validation.get("suppressed_active_kinds") else "degraded"
     tranches: list[dict[str, Any]] = [
         _standard_tranche(
             "TR-0",
@@ -275,6 +285,14 @@ def compile_remediation_plan(
             "plan_markdown": _rel_or_abs(vault_path, "plans/latest-plan.md"),
             "plan_json": _rel_or_abs(vault_path, "plans/latest-plan.json"),
             "notification": _rel_or_abs(vault_path, "health/latest-notification.txt"),
+            "repair_drafts_dir": _rel_or_abs(vault_path, "repairs/drafts"),
+            "repair_ledger_json": _rel_or_abs(vault_path, "repairs/ledger/latest-ledger.json"),
+            "repair_ledger_markdown": _rel_or_abs(vault_path, "repairs/ledger/latest-ledger.md"),
+            "repair_closeout": _rel_or_abs(vault_path, "repairs/ledger/latest-closeout.md"),
+        },
+        "validation": {
+            "scan_completeness": scan_validation,
+            "proposal_actionability": actionability_validation,
         },
         "tranches": tranches,
         "operator_inbox": [
@@ -285,9 +303,14 @@ def compile_remediation_plan(
         "safety": {
             "auto_apply": False,
             "source_mutation_allowed": False,
+            "repair_module_available": True,
+            "auto_draft_allowed": True,
+            "auto_apply_allowed_target_classes": sorted(SAFE_AUTO_APPLY_TARGET_CLASSES),
+            "always_human_gated_target_classes": sorted(ALWAYS_HUMAN_GATED_TARGET_CLASSES),
             "notes": [
                 "EVA remediation plans are checklists, not approval to mutate source runtime state.",
-                "Any workflow that applies changes must be separate and operator-approved.",
+                "EVA-Repair may draft bundles and may only auto-apply deterministic EVA-owned generated artifacts.",
+                "Memory, skills, configs, credentials, scheduler state, delivery destinations, public repos, and operator-profile promotion remain human-gated.",
             ],
         },
     }
@@ -315,9 +338,28 @@ def render_remediation_plan_markdown(plan: dict[str, Any]) -> str:
         f"- Pending proposals: `{artifacts.get('pending_proposals_dir', 'proposals/pending')}`",
         f"- Plan JSON: `{artifacts.get('plan_json', 'plans/latest-plan.json')}`",
         f"- Plan Markdown: `{artifacts.get('plan_markdown', 'plans/latest-plan.md')}`",
+        f"- Repair drafts: `{artifacts.get('repair_drafts_dir', 'repairs/drafts')}`",
+        f"- Repair ledger: `{artifacts.get('repair_ledger_markdown', 'repairs/ledger/latest-ledger.md')}`",
+        f"- Repair closeout: `{artifacts.get('repair_closeout', 'repairs/ledger/latest-closeout.md')}`",
+        "",
+        "## Validation",
+    ]
+    validation = plan.get("validation", {}) if isinstance(plan.get("validation", {}), dict) else {}
+    if validation:
+        for name, result in validation.items():
+            lines.append(f"- `{name}`: `{result.get('status', 'unknown')}`")
+            missing = result.get("missing_proposal_kinds") or []
+            suppressed = result.get("suppressed_active_kinds") or []
+            if missing:
+                lines.append("  - Missing proposal kinds: " + ", ".join(f"`{kind}`" for kind in missing))
+            if suppressed:
+                lines.append("  - Suppressed active kinds: " + ", ".join(f"`{kind}`" for kind in suppressed))
+    else:
+        lines.append("- No validator results available.")
+    lines.extend([
         "",
         "## Findings Summary",
-    ]
+    ])
     if counts:
         for key in sorted(counts):
             lines.append(f"- `{key}`: {counts[key]}")
@@ -370,6 +412,8 @@ def render_remediation_plan_markdown(plan: dict[str, Any]) -> str:
         "## Safety",
         "- Auto-apply: `false`",
         "- Source mutation allowed by scan/plan generation: `false`",
+        "- EVA-Repair auto-draft allowed: `true`",
+        "- EVA-Repair auto-apply allowed only for EVA-owned generated artifacts/review packets/proposal state.",
         "- Use a separate approved workflow for any changes to memories, skills, configs, credentials, scheduler state, or delivery destinations.",
         "",
     ])

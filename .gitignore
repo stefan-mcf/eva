@@ -32,6 +32,7 @@ build/
 
 # Logs and local scratch
 *.log
+.hermes/
 .hermes-swarm-reports/
 
 # EVA runtime/vault artifacts are generated outside the source repo.

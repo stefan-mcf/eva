@@ -10,7 +10,7 @@ EVA observes durable records from an agent system, turns them into structured ev
 - Runtime support: Hermes adapter first, with runtime-specific adapters kept behind explicit integration boundaries.
 - Runtime dependencies: Python standard library only.
 - Development tools: pytest, Ruff, setuptools/build.
-- Safety stance: read-mostly and proposal-only.
+- Safety stance: read-mostly by default; repair drafting is allowed, while live mutation is policy-gated.
 
 ## Why EVA exists
 
@@ -33,7 +33,9 @@ EVA currently provides a Hermes adapter that can:
 - compile an operator profile from evidence;
 - draft pending optimization proposals for manual approval;
 - compile a concise operator brief;
-- generate a checklisted remediation plan plus scheduler-friendly notification summary; and
+- generate a checklisted remediation plan plus scheduler-friendly notification summary;
+- draft repair bundles and operator ledgers from approved/pending proposals;
+- safely apply only deterministic EVA-owned generated-artifact repairs; and
 - run the full loop from a CLI command or scheduler.
 
 ## What EVA does not do
@@ -41,6 +43,7 @@ EVA currently provides a Hermes adapter that can:
 EVA does **not**:
 
 - automatically edit memories, skills, configs, source code, or runtime profiles;
+- silently apply repair bundles that target memory, skills, profile configs, credentials, scheduler state, delivery destinations, or public repos;
 - send proposals as if they were approved changes;
 - require a live daemon or tail logs in real time for the current local-first release;
 - publish telemetry to an external service;
@@ -59,7 +62,9 @@ Evidence Sources
   → Proposal Engine
   → Brief Compiler
   → Remediation Plan Compiler
-  → Operator Review
+  → EVA-Repair Drafts / Ledger
+  → Safe Apply / Verify / Closeout
+  → Operator Review for human-gated targets
 ```
 
 Runtime flow for the Hermes adapter:
@@ -141,8 +146,9 @@ Installed console scripts:
 - `eva-compile-brief` — brief compiler.
 - `eva-compile-plan` — remediation plan compiler.
 - `eva-propose-patches` — proposal generator.
+- `eva-repair` — repair bundle drafting, ledger, safe apply, verification, and closeout.
 
-See [docs/cli.md](docs/cli.md) for command inputs, outputs, read/write behavior, and examples. See [docs/remediation-plans.md](docs/remediation-plans.md) for the remediation-plan contract.
+See [docs/cli.md](docs/cli.md) for command inputs, outputs, read/write behavior, and examples. See [docs/remediation-plans.md](docs/remediation-plans.md) for the remediation-plan contract. See [docs/eva-repair.md](docs/eva-repair.md) for repair bundle policy, proposal lifecycle states, and human-gated apply boundaries.
 
 ## Tester guide
 

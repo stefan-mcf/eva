@@ -28,6 +28,8 @@ eva-compile-profile = "eva.compilers.compile_profile:main"
 eva-compile-plan = "eva.compilers.compile_remediation_plan:main"
 eva-propose-patches = "eva.proposers.propose_patches:main"
 eva-loop = "eva.loop:main"
+eva-mcp = "eva.mcp_server:main"
+eva-repair = "eva.repair.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

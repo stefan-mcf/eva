@@ -171,6 +171,34 @@ Example through the loop:
 eva-loop --profiles-dir /path/to/profiles --vault /path/to/eva-vault
 ```
 
+## `eva-repair`
+
+Purpose: draft, inspect, ledger, safely apply, verify, and close out EVA repair bundles generated from proposal records. `eva-repair` does not grant approval for live memory, skill, profile config, scheduler, credential, delivery, or public-repo mutation.
+
+Inputs:
+
+- `--vault PATH` — EVA vault containing proposals and repair artifacts.
+- `draft PROPOSAL_ID` — draft one repair bundle.
+- `draft-all` — draft all pending proposal bundles and optionally write a ledger.
+- `list` / `inspect` — review proposal state.
+- `approve`, `reject`, `defer` — record operator proposal outcomes with `--note`.
+- `apply BUNDLE_ID` — apply only policy-allowed EVA-owned generated-artifact actions.
+- `verify OUTCOME_ID` — verify an apply outcome.
+- `ledger` / `closeout` — render operator inbox and closeout artifacts.
+
+Outputs: JSON or Markdown on stdout. With `--write`, writes only under `repairs/` and `review-packets/` in the selected vault, except proposal outcome commands which move proposal JSON between proposal state directories.
+
+Read/write behavior: drafting, ledgers, review packets, and closeout reports are vault-local. Auto-apply is restricted to deterministic EVA-owned generated artifacts and review packets. Human-gated target classes remain blocked until a separate approved workflow handles them.
+
+Examples:
+
+```bash
+eva-repair list --vault /path/to/eva-vault --json
+eva-repair draft-all --vault /path/to/eva-vault --write --json
+eva-repair ledger --vault /path/to/eva-vault --write --markdown
+eva-repair closeout --vault /path/to/eva-vault --write --markdown
+```
+
 ## Recommended dry-run smoke
 
 ```bash

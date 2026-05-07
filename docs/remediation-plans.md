@@ -14,7 +14,9 @@ Evidence Sources
   -> Proposal Engine
   -> Brief Compiler
   -> Remediation Plan Compiler
-  -> Operator Review
+  -> EVA-Repair Drafts / Ledger
+  -> Safe Apply / Verify / Closeout for EVA-owned artifacts
+  -> Operator Review for human-gated targets
 ```
 
 The plan answers the operator questions that a brief alone does not:
@@ -30,9 +32,10 @@ The plan answers the operator questions that a brief alone does not:
 Remediation plans preserve EVA's proposal-only boundary:
 
 - EVA scans durable records.
-- EVA writes evidence, proposals, briefs, plans, and notification summaries to the selected vault.
+- EVA writes evidence, proposals, briefs, plans, notification summaries, repair drafts, ledgers, review packets, and closeout reports to the selected vault.
+- EVA-Repair may apply only deterministic EVA-owned generated artifacts and review packets.
 - EVA does not edit memories, skills, profile configs, credentials, scheduler state, delivery destinations, source repositories, or external services.
-- Any workflow that applies a plan item must be separate and explicitly approved by the operator.
+- Any workflow that applies a human-gated plan item must be separate and explicitly approved by the operator.
 
 ## Vault artifacts
 
@@ -47,6 +50,12 @@ eva-vault/
     plan-<timestamp>.md
   health/
     latest-notification.txt
+  repairs/
+    drafts/
+    applied/
+    failed/
+    ledger/
+  review-packets/
 ```
 
 `latest-plan.json` is the machine-readable contract. `latest-plan.md` is the operator checklist. Timestamped copies make scan-to-plan history diffable.
@@ -84,7 +93,11 @@ A remediation plan has this stable top-level shape:
     "pending_proposals_dir": "proposals/pending",
     "plan_markdown": "plans/latest-plan.md",
     "plan_json": "plans/latest-plan.json",
-    "notification": "health/latest-notification.txt"
+    "notification": "health/latest-notification.txt",
+    "repair_drafts_dir": "repairs/drafts",
+    "repair_ledger_json": "repairs/ledger/latest-ledger.json",
+    "repair_ledger_markdown": "repairs/ledger/latest-ledger.md",
+    "repair_closeout": "repairs/ledger/latest-closeout.md"
   },
   "tranches": [
     {
@@ -103,6 +116,10 @@ A remediation plan has this stable top-level shape:
   "safety": {
     "auto_apply": false,
     "source_mutation_allowed": false,
+    "repair_module_available": true,
+    "auto_draft_allowed": true,
+    "auto_apply_allowed_target_classes": ["eva_generated_artifact", "eva_proposal_state", "eva_review_packet"],
+    "always_human_gated_target_classes": ["credential", "delivery_destination", "hermes_memory", "hermes_profile_config", "hermes_skill", "operator_profile", "public_repo", "scheduler", "unknown"],
     "notes": []
   }
 }
@@ -126,8 +143,9 @@ The compiler emits tranches only when they are relevant, except for scan verific
 - `empty` — no findings and no pending proposals.
 - `ok` — findings/proposals exist and no degraded marker was detected.
 - `degraded` — scan data contains degraded, partial, warning, or error markers.
+- `blocked` — active evidence is missing proposal coverage or a suppressed proposal kind still has active findings.
 
-A degraded plan is still useful, but it should not be treated as complete evidence until the degraded scanner/source is understood.
+A degraded or blocked plan is still useful, but it should not be treated as complete evidence until the degraded scanner/source or blocked actionability condition is understood.
 
 ## Markdown contract
 
@@ -160,3 +178,10 @@ Next: review TR-0 scan completeness, then TR-1 artifact review.
 ```
 
 External delivery is not part of EVA core. Hermes cron, cron, launchd, systemd, or a wrapper script may deliver this text through an operator-approved channel.
+
+
+## Repair-aware validation
+
+Plans include validator output for scan completeness and proposal actionability. Actionability checks map each nonzero evidence class to the proposal kind that should represent it. If an active evidence class has no proposal, or if settings suppress a proposal kind that still has active findings, the plan status becomes degraded or blocked and the Markdown validation section names the missing/suppressed kinds.
+
+Repair artifacts are referenced directly from the plan so operators can move from evidence to proposal to repair draft to ledger without mutating live runtime state.

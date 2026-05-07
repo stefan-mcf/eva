@@ -20,6 +20,7 @@ from eva.common import (
     safe_snippet,
     utc_now,
 )
+from eva.proposals import PROPOSAL_STATES, normalize_proposal_state
 from eva.settings import load_settings
 
 
@@ -80,14 +81,14 @@ def _proposal(
 def _history(vault: str | Path = EVA_VAULT_DIR) -> dict[str, dict[str, int]]:
     vault = Path(vault)
     counts: dict[str, dict[str, int]] = {}
-    for outcome in ("applied", "rejected"):
+    for outcome in PROPOSAL_STATES:
         for path in (vault / "proposals" / outcome).glob("*.json"):
             try:
                 proposal = read_json(path)
             except Exception:
                 continue
             kind = proposal.get("kind", "unknown")
-            counts.setdefault(kind, {"applied": 0, "rejected": 0})[outcome] += 1
+            counts.setdefault(kind, {"applied": 0, "rejected": 0})[outcome] = counts.setdefault(kind, {"applied": 0, "rejected": 0}).get(outcome, 0) + 1
     return counts
 
 
@@ -161,6 +162,57 @@ def generate_proposals(
             )
         )
 
+    tool_failures = sessions.get("tool_failures", [])
+    tool_failure_total = int(sessions.get("summary", {}).get("tool_failures_found", 0) or len(tool_failures))
+    if tool_failure_total:
+        proposals.append(
+            _proposal(
+                "tool_failure_triage",
+                "Classify raw tool-failure evidence",
+                tool_failures,
+                "Triage sampled tool-failure evidence into real tool misuse, expected command failures, and scanner false positives before patching runbooks.",
+                {"failure_count": tool_failure_total, "sample_limit": len(tool_failures)},
+                confidence="medium",
+                false_positive_risk="high",
+                suggested_tranche=8,
+                disposition="operator_decision",
+            )
+        )
+
+    corrections = sessions.get("corrections", [])
+    correction_total = int(sessions.get("summary", {}).get("corrections_found", 0) or len(corrections))
+    if correction_total:
+        proposals.append(
+            _proposal(
+                "session_correction_review",
+                "Harvest recurring correction patterns",
+                corrections,
+                "Review recent user corrections and convert recurring, durable patterns into memory or skill updates while rejecting transient task-specific instructions.",
+                {"correction_count": correction_total, "sample_limit": len(corrections)},
+                confidence="medium",
+                false_positive_risk="medium",
+                suggested_tranche=8,
+                disposition="operator_decision",
+            )
+        )
+
+    session_skill_patches = sessions.get("skill_patches", [])
+    session_skill_patch_total = int(sessions.get("summary", {}).get("skill_patches_found", 0) or len(session_skill_patches))
+    if session_skill_patch_total:
+        proposals.append(
+            _proposal(
+                "session_skill_patch_review",
+                "Review recent skill patch churn",
+                session_skill_patches,
+                "Review recent skill patch evidence and decide whether frequently patched procedures need consolidation, tests, or supporting references.",
+                {"skill_patch_count": session_skill_patch_total, "sample_limit": len(session_skill_patches)},
+                confidence="medium",
+                false_positive_risk="medium",
+                suggested_tranche=7,
+                disposition="operator_decision",
+            )
+        )
+
     oversized = skills.get("oversized_skills", [])
     if oversized:
         proposals.append(
@@ -187,6 +239,38 @@ def generate_proposals(
                 "Consolidate heavily patched skills into cleaner procedures to reduce future patch churn.",
                 confidence="low",
                 false_positive_risk="high",
+                suggested_tranche=7,
+                disposition="operator_decision",
+            )
+        )
+
+    duplicates = skills.get("duplicate_skill_names", [])
+    if duplicates:
+        proposals.append(
+            _proposal(
+                "skill_duplicate_review",
+                "Review duplicate active skill names",
+                duplicates,
+                "Classify duplicate active skill names as shared-symlink artifacts, intentional profile variants, or true divergent duplicates that should be consolidated.",
+                {"duplicate_name_count": len(duplicates)},
+                confidence="medium",
+                false_positive_risk="medium",
+                suggested_tranche=7,
+                disposition="operator_decision",
+            )
+        )
+
+    stale = skills.get("stale_skills", [])
+    if stale:
+        proposals.append(
+            _proposal(
+                "skill_stale_review",
+                "Review stale skill candidates",
+                stale,
+                "Classify stale skill candidates as active-but-quiet, archive-ready, or candidates for consolidation into umbrella skills.",
+                {"stale_count": len(stale)},
+                confidence="medium",
+                false_positive_risk="medium",
                 suggested_tranche=7,
                 disposition="operator_decision",
             )
@@ -254,22 +338,48 @@ def write_pending(proposals: list[dict[str, Any]], vault: str | Path = EVA_VAULT
     return out
 
 
+def _find_proposal_path(vault: Path, proposal_id: str) -> Path:
+    exact_matches: list[Path] = []
+    prefix_matches: list[Path] = []
+    for state in PROPOSAL_STATES:
+        for path in sorted((vault / "proposals" / state).glob("*.json")):
+            try:
+                proposal = read_json(path)
+            except Exception:
+                continue
+            current_id = str(proposal.get("id", ""))
+            if current_id == proposal_id or path.stem == proposal_id:
+                exact_matches.append(path)
+            elif current_id.startswith(proposal_id) or path.stem.startswith(proposal_id):
+                prefix_matches.append(path)
+    if len(exact_matches) == 1:
+        return exact_matches[0]
+    if len(exact_matches) > 1:
+        raise ValueError(f"ambiguous proposal id: {proposal_id}")
+    if len(prefix_matches) == 1:
+        return prefix_matches[0]
+    if len(prefix_matches) > 1:
+        raise ValueError(f"ambiguous proposal id prefix: {proposal_id}")
+    raise FileNotFoundError(f"proposal not found: {proposal_id}")
+
+
 def record_outcome(proposal_id: str, outcome: str, vault: str | Path = EVA_VAULT_DIR, note: str = "") -> Path:
     vault = ensure_vault(Path(vault))
-    src = vault / "proposals" / "pending" / f"{proposal_id}.json"
-    if not src.exists():
-        matches = list((vault / "proposals" / "pending").glob(f"*{proposal_id}*.json"))
-        if not matches:
-            raise FileNotFoundError(f"pending proposal not found: {proposal_id}")
-        src = matches[0]
+    outcome = normalize_proposal_state(outcome)
+    src = _find_proposal_path(vault, proposal_id)
     proposal = read_json(src)
+    previous = proposal.get("status", src.parent.name)
+    proposal["previous_status"] = previous
     proposal["status"] = outcome
-    proposal["resolved_at"] = utc_now()
+    proposal["updated_at"] = utc_now()
+    if outcome in {"applied", "rejected", "superseded"}:
+        proposal["resolved_at"] = proposal["updated_at"]
     proposal["operator_note"] = note
-    target_dir = vault / "proposals" / ("applied" if outcome == "applied" else "rejected")
+    target_dir = vault / "proposals" / outcome
     target = target_dir / src.name
     atomic_write_json(target, proposal)
-    src.unlink(missing_ok=True)
+    if src != target:
+        src.unlink(missing_ok=True)
     return target
 
 
@@ -277,7 +387,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Draft or record EVA optimization proposals")
     parser.add_argument("scan", nargs="?", help="combined scan JSON; defaults to latest-scan.json")
     parser.add_argument("--vault", default=str(EVA_VAULT_DIR))
-    parser.add_argument("--record-outcome", choices=["applied", "rejected"])
+    parser.add_argument("--record-outcome", choices=sorted(PROPOSAL_STATES))
     parser.add_argument("--proposal-id")
     parser.add_argument("--note", default="")
     args = parser.parse_args()
